@@ -1407,7 +1407,31 @@ app.post('/webhook-mp', async (req, res) => {
   }
 });
 
-app.get('/teste-mp/:codigo', (req, res) => {
+app.get('/imprimir-qr/:codigo', (req, res) => {
+  const codigo = req.params.codigo.toUpperCase();
+  const url = `https://luxbingo-server-production.up.railway.app/jogo/${codigo}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
+  res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>QR Code - Lux Bingo</title>
+<style>
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:Arial,sans-serif;background:#fff}
+h1{font-size:24px;margin-bottom:4px}
+.sub{font-size:13px;color:#666;margin-bottom:20px}
+img{border:3px solid #c9a227;border-radius:12px;margin-bottom:16px}
+.cod{font-size:22px;font-weight:900;letter-spacing:4px;margin-bottom:4px}
+.url{font-size:11px;color:#999;margin-bottom:20px}
+@media print{button{display:none}}
+</style></head><body>
+<h1>🎰 LUX BINGO</h1>
+<div class="sub">Escaneie para participar</div>
+<img src="${qrUrl}" width="300" height="300">
+<div class="cod">${codigo}</div>
+<div class="url">${url}</div>
+<button onclick="window.print()" style="padding:12px 28px;background:#c9a227;border:none;border-radius:10px;font-size:16px;font-weight:900;cursor:pointer">🖨️ Imprimir</button>
+</body></html>`);
+});
+
+app.get('/teste-bingo/:codigo', (req, res) => {
   const s = salas[req.params.codigo?.toUpperCase()];
   res.json({ 
     ok: true, 
