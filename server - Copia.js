@@ -1785,6 +1785,7 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
     if (!s || s.adm.socketId !== socket.id) return cb && cb({ ok: false });
     s.sorteados = [];
     s.ativa = false;
+    s.vencedor = null;
     s.numeros = Array.from({ length: 90 }, (_, i) => i + 1);
     salvarSalas();
     io.to(codigo).emit('sorteio_zerado');
