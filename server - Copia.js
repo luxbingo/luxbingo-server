@@ -1407,7 +1407,40 @@ app.post('/webhook-mp', async (req, res) => {
   }
 });
 
-app.get('/teste-mp/:codigo', (req, res) => {
+app.get('/imprimir-qr/:codigo', (req, res) => {
+  const codigo = req.params.codigo.toUpperCase();
+  const url = `https://luxbingo-server-production.up.railway.app/jogo/${codigo}`;
+const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(url)}`;
+  res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>QR Code - Lux Bingo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;background:#fff;padding:20px}
+h1{font-size:36px;font-weight:900;margin-bottom:6px;color:#0d1b2e}
+.sub{font-size:16px;color:#666;margin-bottom:24px}
+img{border:4px solid #c9a227;border-radius:16px;margin-bottom:20px;width:420px;height:420px}
+.cod{font-size:32px;font-weight:900;letter-spacing:6px;margin-bottom:8px;color:#0d1b2e}
+.url{font-size:13px;color:#999;margin-bottom:24px}
+button{padding:14px 36px;background:#c9a227;border:none;border-radius:12px;font-size:18px;font-weight:900;cursor:pointer}
+@media print{
+  button{display:none}
+  body{padding:0}
+  img{width:500px;height:500px}
+  h1{font-size:42px}
+  .cod{font-size:38px}
+}
+@page{size:A4;margin:1cm}
+</style></head><body>
+<h1>🎰 LUX BINGO</h1>
+<div class="sub">Escaneie o QR Code para participar do bingo!</div>
+<img src="${qrUrl}" width="420" height="420">
+<div class="cod">${codigo}</div>
+<div class="url">${url}</div>
+<button onclick="window.print()">🖨️ Imprimir</button>
+</body></html>`);
+});
+
+app.get('/teste-bingo/:codigo', (req, res) => {
   const s = salas[req.params.codigo?.toUpperCase()];
   res.json({ 
     ok: true, 

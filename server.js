@@ -1410,24 +1410,33 @@ app.post('/webhook-mp', async (req, res) => {
 app.get('/imprimir-qr/:codigo', (req, res) => {
   const codigo = req.params.codigo.toUpperCase();
   const url = `https://luxbingo-server-production.up.railway.app/jogo/${codigo}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
+const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(url)}`;
   res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8">
 <title>QR Code - Lux Bingo</title>
 <style>
-body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:Arial,sans-serif;background:#fff}
-h1{font-size:24px;margin-bottom:4px}
-.sub{font-size:13px;color:#666;margin-bottom:20px}
-img{border:3px solid #c9a227;border-radius:12px;margin-bottom:16px}
-.cod{font-size:22px;font-weight:900;letter-spacing:4px;margin-bottom:4px}
-.url{font-size:11px;color:#999;margin-bottom:20px}
-@media print{button{display:none}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;background:#fff;padding:20px}
+h1{font-size:36px;font-weight:900;margin-bottom:6px;color:#0d1b2e}
+.sub{font-size:16px;color:#666;margin-bottom:24px}
+img{border:4px solid #c9a227;border-radius:16px;margin-bottom:20px;width:420px;height:420px}
+.cod{font-size:32px;font-weight:900;letter-spacing:6px;margin-bottom:8px;color:#0d1b2e}
+.url{font-size:13px;color:#999;margin-bottom:24px}
+button{padding:14px 36px;background:#c9a227;border:none;border-radius:12px;font-size:18px;font-weight:900;cursor:pointer}
+@media print{
+  button{display:none}
+  body{padding:0}
+  img{width:500px;height:500px}
+  h1{font-size:42px}
+  .cod{font-size:38px}
+}
+@page{size:A4;margin:1cm}
 </style></head><body>
 <h1>🎰 LUX BINGO</h1>
-<div class="sub">Escaneie para participar</div>
-<img src="${qrUrl}" width="300" height="300">
+<div class="sub">Escaneie o QR Code para participar do bingo!</div>
+<img src="${qrUrl}" width="420" height="420">
 <div class="cod">${codigo}</div>
 <div class="url">${url}</div>
-<button onclick="window.print()" style="padding:12px 28px;background:#c9a227;border:none;border-radius:10px;font-size:16px;font-weight:900;cursor:pointer">🖨️ Imprimir</button>
+<button onclick="window.print()">🖨️ Imprimir</button>
 </body></html>`);
 });
 
