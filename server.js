@@ -1328,7 +1328,11 @@ app.post('/webhook-mp', async (req, res) => {
       if (payment.error) continue;
       if (payment.status !== 'approved') return;
 
-      const { codigo: codPag, id_unico: idUnico, qtd } = payment.metadata || {};
+      console.log('[WEBHOOK] metadata:', JSON.stringify(payment.metadata));
+      const meta = payment.metadata || {};
+      const codPag = meta.codigo || meta.codigo;
+      const idUnico = meta.idUnico || meta.id_unico;
+      const qtd = meta.qtd || meta.qtd || 1;
       if (!codPag || codPag !== codigo) continue;
 
       const sol = sala.solicitacoes[idUnico];
@@ -1668,8 +1672,9 @@ io.on('connection', (socket) => {
     if (cj.length >= 5) return cb({ ok: false, erro: 'Máximo de 5 cartelas!' });
     
     const sol = s.solicitacoes[idUnico];
+    const cjAtual = s.cartelasVendidasPorIdUnico[idUnico] || [];
     if (sol && sol.status === 'pendente') return cb({ ok: false, erro: 'Você já tem uma solicitação pendente.' });
-    if (sol && sol.status === 'aprovado') return cb({ ok: false, erro: 'Sua cartela já foi liberada!' });
+    if (cjAtual.length > 0) return cb({ ok: false, erro: 'Sua cartela já foi liberada! Recarregue a página.' });
     
     s.solicitacoes[idUnico] = {
       idUnico: idUnico,
