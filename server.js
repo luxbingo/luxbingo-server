@@ -832,9 +832,9 @@ function toggleAudioCart(){
   audioOn=!audioOn;
   var bMain=document.getElementById('btnAudio');
   if(bMain){bMain.textContent=audioOn?'🔊 Áudio ON':'🔇 Áudio OFF';bMain.style.borderColor=audioOn?'rgba(201,162,39,.4)':'rgba(231,76,60,.5)';bMain.style.color=audioOn?'var(--gold2)':'#e74c3c';}
-  var b=document.getElementById('btnAudioCart');
+ var b=document.getElementById('btnAudioCart');
   if(!b)return;
-  b.textContent=audioOn?'🔊':'🔇';
+  b.textContent=audioOn?'🔊 Áudio ON':'🔇 Áudio OFF';
   b.style.background=audioOn?'linear-gradient(135deg,var(--gold),var(--gold2))':'rgba(231,76,60,.2)';
   b.style.color=audioOn?'var(--navy)':'#e74c3c';
   var bMain=document.getElementById('btnAudio');
@@ -880,7 +880,7 @@ function renderCartelas(){
   var audioBg=audioOn?'linear-gradient(135deg,var(--gold),var(--gold2))':'rgba(231,76,60,.2)';
   var audioClr=audioOn?'var(--navy)':'#e74c3c';
   var audioTxt=audioOn?'🔊':'🔇';
-  div.innerHTML='<div class="cartela-header"><div class="cartela-titulo">🎟️ CARTELA '+(tabAtiva+1)+'</div><div class="cartela-num">'+c.id+'</div><button id="btnAudioCart" onclick="toggleAudioCart()" style="background:'+audioBg+';border:none;border-radius:6px;padding:3px 8px;font-size:9px;font-weight:900;color:'+audioClr+';cursor:pointer;margin-left:6px">'+audioTxt+'</button></div>';
+  div.innerHTML='<div class="cartela-header"><div class="cartela-titulo">🎟️ CARTELA '+(tabAtiva+1)+'</div><div class="cartela-num">'+c.id+'</div><button id="btnAudioCart" onclick="toggleAudioCart()" style="background:'+audioBg+';border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:900;color:'+audioClr+';cursor:pointer;margin-left:6px">'+audioTxt+' '+(audioOn?'Áudio ON':'Áudio OFF')+'</button></div>';
   var letRow=document.createElement('div');letRow.className='letras-row';
   ['B','I','N','G','O'].forEach(function(l){var s=document.createElement('div');s.className='letra';s.textContent=l;letRow.appendChild(s);});
   div.appendChild(letRow);
