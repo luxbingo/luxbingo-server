@@ -212,8 +212,11 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--text);
         <div style="font-size:8px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px">🏆 Prêmio</div>
         <div style="font-size:18px;font-weight:900;color:var(--navy)" id="premioJogVal">--</div>
       </div>
-    </div>
-    <div id="alertaBox" style="display:none"></div>
+   </div>
+      <div id="sorteioStatusBox" style="display:none;text-align:center;padding:3px 6px;background:rgba(46,204,113,.1);border-bottom:1px solid rgba(46,204,113,.2)">
+        <div style="font-size:11px;font-weight:900;color:#2ecc71;letter-spacing:1px">🎲 SORTEIO EM ANDAMENTO</div>
+      </div>
+      <div id="alertaBox" style="display:none"></div>
     <div id="bingoBox"></div>
     <div class="cartelas-tabs" id="cartTabs" style="padding:6px 10px 0;display:flex;gap:4px;flex-shrink:0"></div>
     <div id="cartScroll" style="padding:6px 10px 10px;display:flex;flex-direction:column;align-items:center">
@@ -663,6 +666,8 @@ function registrarEventos(nome){
 document.getElementById('nAtual').textContent=d.numero;
     var ab=document.getElementById('aguardandoBox');
     if(ab)ab.style.display='none';
+    var sb=document.getElementById('sorteioStatusBox');
+    if(sb)sb.style.display='block';
     cartelas.forEach(function(c){
       if(marc[c.id].indexOf(d.numero)===-1)marc[c.id].push(d.numero);
     });
