@@ -1910,7 +1910,7 @@ io.to(codigo).emit('bingo_confirmado', { vencedor: { ...s.vencedor, chavePix }, 
 
   socket.on('editar_sala', ({ codigo, valorCartela, chavePix, horario, youtubeLink, mpToken, porc }, cb) => {
     const s = salas[codigo];
-    if (!s || s.adm.socketId !== socket.id) return cb && cb({ ok: false });
+    if (!s) return cb && cb({ ok: false });
     if (valorCartela) s.valorCartela = parseFloat(valorCartela);
     if (chavePix) s.chavePix = chavePix;
     if (horario !== undefined) s.horario = horario;
