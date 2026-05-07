@@ -660,10 +660,6 @@ function registrarEventos(nome){
   });
  sock.on('numero_sorteado',function(d){
     nums=d.sorteados||nums;
-    if(d.premioEstimado){
-      var pb=document.getElementById('premioJogBox');var pv=document.getElementById('premioJogVal');
-      if(pb&&pv){pb.style.display='block';pv.textContent='R$ '+d.premioEstimado.toLocaleString('pt-BR',{minimumFractionDigits:2});}
-    }
     document.getElementById('nAtual').textContent=d.numero;
     var ab=document.getElementById('aguardandoBox');
     if(ab)ab.style.display='none';
@@ -731,6 +727,15 @@ sock.on('alerta_jogador',function(d){
     renderCartelas();renderGrid();
     toast('🔄 Sorteio zerado pelo ADM!');
   });
+  sock.on('premio_anunciado', function(d){
+    var pb = document.getElementById('premioJogBox');
+    var pv = document.getElementById('premioJogVal');
+    if(pb && pv){
+      pb.style.display = 'block';
+      pv.textContent = d.premio;
+    }
+    toast('🏆 Prêmio: ' + d.premio);
+  });
   sock.on('cartelas_limpas',function(){
     try{
       var n=localStorage.getItem('luxbingo_nome_'+COD)||'Jogador';
@@ -793,6 +798,7 @@ function conectarJogo(nome){
     sock.emit('entrar_sala',{codigo:COD,idUnico:meuIdUnico,nomeJogador:nome},function(r){
       if(r&&r.ok){
         nums=r.sorteados||nums;
+        if(r.youtubeLink){setYoutube(r.youtubeLink);mostrarYoutube();}
         cartelas.forEach(function(c){
           if(!marc[c.id])marc[c.id]=[];
           nums.forEach(function(n){
@@ -826,9 +832,9 @@ function toggleAudioCart(){
   audioOn=!audioOn;
   var bMain=document.getElementById('btnAudio');
   if(bMain){bMain.textContent=audioOn?'🔊 Áudio ON':'🔇 Áudio OFF';bMain.style.borderColor=audioOn?'rgba(201,162,39,.4)':'rgba(231,76,60,.5)';bMain.style.color=audioOn?'var(--gold2)':'#e74c3c';}
-  var b=document.getElementById('btnAudioCart');
+ var b=document.getElementById('btnAudioCart');
   if(!b)return;
-  b.textContent=audioOn?'🔊':'🔇';
+  b.textContent=audioOn?'🔊 Áudio ON':'🔇 Áudio OFF';
   b.style.background=audioOn?'linear-gradient(135deg,var(--gold),var(--gold2))':'rgba(231,76,60,.2)';
   b.style.color=audioOn?'var(--navy)':'#e74c3c';
   var bMain=document.getElementById('btnAudio');
@@ -874,7 +880,7 @@ function renderCartelas(){
   var audioBg=audioOn?'linear-gradient(135deg,var(--gold),var(--gold2))':'rgba(231,76,60,.2)';
   var audioClr=audioOn?'var(--navy)':'#e74c3c';
   var audioTxt=audioOn?'🔊':'🔇';
-  div.innerHTML='<div class="cartela-header"><div class="cartela-titulo">🎟️ CARTELA '+(tabAtiva+1)+'</div><div class="cartela-num">'+c.id+'</div><button id="btnAudioCart" onclick="toggleAudioCart()" style="background:'+audioBg+';border:none;border-radius:6px;padding:3px 8px;font-size:9px;font-weight:900;color:'+audioClr+';cursor:pointer;margin-left:6px">'+audioTxt+'</button></div>';
+  div.innerHTML='<div class="cartela-header"><div class="cartela-titulo">🎟️ CARTELA '+(tabAtiva+1)+'</div><div class="cartela-num">'+c.id+'</div><button id="btnAudioCart" onclick="toggleAudioCart()" style="background:'+audioBg+';border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:900;color:'+audioClr+';cursor:pointer;margin-left:6px">'+audioTxt+' '+(audioOn?'Áudio ON':'Áudio OFF')+'</button></div>';
   var letRow=document.createElement('div');letRow.className='letras-row';
   ['B','I','N','G','O'].forEach(function(l){var s=document.createElement('div');s.className='letra';s.textContent=l;letRow.appendChild(s);});
   div.appendChild(letRow);
@@ -1328,7 +1334,11 @@ app.post('/webhook-mp', async (req, res) => {
       if (payment.error) continue;
       if (payment.status !== 'approved') return;
 
-      const { codigo: codPag, id_unico: idUnico, qtd } = payment.metadata || {};
+      console.log('[WEBHOOK] metadata:', JSON.stringify(payment.metadata));
+      const meta = payment.metadata || {};
+      const codPag = meta.codigo || meta.codigo;
+      const idUnico = meta.idUnico || meta.id_unico;
+      const qtd = meta.qtd || meta.qtd || 1;
       if (!codPag || codPag !== codigo) continue;
 
       const sol = sala.solicitacoes[idUnico];
@@ -1668,8 +1678,9 @@ io.on('connection', (socket) => {
     if (cj.length >= 5) return cb({ ok: false, erro: 'Máximo de 5 cartelas!' });
     
     const sol = s.solicitacoes[idUnico];
+    const cjAtual = s.cartelasVendidasPorIdUnico[idUnico] || [];
     if (sol && sol.status === 'pendente') return cb({ ok: false, erro: 'Você já tem uma solicitação pendente.' });
-    if (sol && sol.status === 'aprovado') return cb({ ok: false, erro: 'Sua cartela já foi liberada!' });
+    if (cjAtual.length > 0) return cb({ ok: false, erro: 'Sua cartela já foi liberada! Recarregue a página.' });
     
     s.solicitacoes[idUnico] = {
       idUnico: idUnico,
@@ -1881,6 +1892,13 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
 io.to(codigo).emit('bingo_confirmado', { vencedor: { ...s.vencedor, chavePix }, sorteados: s.sorteados });
     io.to(s.adm.socketId).emit('parar_sorteio');
     cb({ ok: true });
+  });
+
+  socket.on('anunciar_premio', ({ codigo, premio }, cb) => {
+    const s = salas[codigo];
+    if (!s || s.adm.socketId !== socket.id) return cb && cb({ ok: false });
+    io.to(codigo).emit('premio_anunciado', { premio });
+    cb && cb({ ok: true });
   });
 
   socket.on('disconnect', () => {
