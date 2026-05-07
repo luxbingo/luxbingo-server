@@ -660,10 +660,6 @@ function registrarEventos(nome){
   });
  sock.on('numero_sorteado',function(d){
     nums=d.sorteados||nums;
-    if(d.premioEstimado){
-      var pb=document.getElementById('premioJogBox');var pv=document.getElementById('premioJogVal');
-      if(pb&&pv){pb.style.display='block';pv.textContent='R$ '+d.premioEstimado.toLocaleString('pt-BR',{minimumFractionDigits:2});}
-    }
     document.getElementById('nAtual').textContent=d.numero;
     var ab=document.getElementById('aguardandoBox');
     if(ab)ab.style.display='none';
@@ -730,6 +726,15 @@ sock.on('alerta_jogador',function(d){
     salvarLocal(nome);
     renderCartelas();renderGrid();
     toast('🔄 Sorteio zerado pelo ADM!');
+  });
+  sock.on('premio_anunciado', function(d){
+    var pb = document.getElementById('premioJogBox');
+    var pv = document.getElementById('premioJogVal');
+    if(pb && pv){
+      pb.style.display = 'block';
+      pv.textContent = d.premio;
+    }
+    toast('🏆 Prêmio: ' + d.premio);
   });
   sock.on('cartelas_limpas',function(){
     try{
@@ -1886,6 +1891,13 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
 io.to(codigo).emit('bingo_confirmado', { vencedor: { ...s.vencedor, chavePix }, sorteados: s.sorteados });
     io.to(s.adm.socketId).emit('parar_sorteio');
     cb({ ok: true });
+  });
+
+  socket.on('anunciar_premio', ({ codigo, premio }, cb) => {
+    const s = salas[codigo];
+    if (!s || s.adm.socketId !== socket.id) return cb && cb({ ok: false });
+    io.to(codigo).emit('premio_anunciado', { premio });
+    cb && cb({ ok: true });
   });
 
   socket.on('disconnect', () => {
