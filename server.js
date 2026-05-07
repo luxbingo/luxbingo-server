@@ -660,9 +660,12 @@ function registrarEventos(nome){
   });
  sock.on('numero_sorteado',function(d){
     nums=d.sorteados||nums;
-    document.getElementById('nAtual').textContent=d.numero;
+document.getElementById('nAtual').textContent=d.numero;
     var ab=document.getElementById('aguardandoBox');
-    if(ab)ab.style.display='none';
+    if(ab){
+      ab.innerHTML='<div style="font-size:clamp(10px,3vw,13px);font-weight:900;color:#2ecc71;text-transform:uppercase;letter-spacing:1px;text-shadow:0 0 10px rgba(46,204,113,0.6)">🎲 SORTEIO EM ANDAMENTO</div>';
+      ab.style.display='block';
+    }
     cartelas.forEach(function(c){
       if(marc[c.id].indexOf(d.numero)===-1)marc[c.id].push(d.numero);
     });
@@ -745,6 +748,11 @@ sock.on('alerta_jogador',function(d){
     }catch(e){}
     cartelas=[];marc={};nums=[];
     document.getElementById('nAtual').textContent='--';
+    var ab=document.getElementById('aguardandoBox');
+    if(ab){
+      ab.innerHTML='<div style="font-size:clamp(10px,3vw,14px);font-weight:900;color:#ffd966;text-transform:uppercase;letter-spacing:1px;text-shadow:0 0 10px rgba(255,217,102,0.6)">⏳ Aguardando Sorteio</div><div id="horarioJogBox" style="font-size:clamp(10px,2.5vw,12px);font-weight:700;color:#c9a227;margin-top:2px"></div>';
+      ab.style.display='block';
+    }
     document.getElementById('semCartela').style.display='block';
     document.getElementById('cartTabs').innerHTML='';
     document.getElementById('cartScroll').innerHTML='<div style="text-align:center;padding:30px 16px;color:var(--textl);font-size:12px" id="semCartela">⏳ Aguardando cartela ser liberada...</div>';
