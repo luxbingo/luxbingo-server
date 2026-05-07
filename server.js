@@ -727,6 +727,10 @@ sock.on('alerta_jogador',function(d){
     document.getElementById('bingoBox').innerHTML='';
     var alerta=document.getElementById('alertaJogador');
     if(alerta&&document.body.contains(alerta))document.body.removeChild(alerta);
+    var sb=document.getElementById('sorteioStatusBox');
+    if(sb)sb.style.display='none';
+    var ab=document.getElementById('aguardandoBox');
+    if(ab)ab.style.display='block';
     var nome=localStorage.getItem('luxbingo_nome_'+COD)||'Jogador';
     salvarLocal(nome);
     renderCartelas();renderGrid();
