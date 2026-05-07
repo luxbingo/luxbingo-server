@@ -212,8 +212,11 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--text);
         <div style="font-size:8px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px">🏆 Prêmio</div>
         <div style="font-size:18px;font-weight:900;color:var(--navy)" id="premioJogVal">--</div>
       </div>
-    </div>
-    <div id="alertaBox" style="display:none"></div>
+   </div>
+      <div id="sorteioStatusBox" style="display:none;text-align:center;padding:3px 6px;background:rgba(46,204,113,.1);border-bottom:1px solid rgba(46,204,113,.2)">
+        <div style="font-size:11px;font-weight:900;color:#2ecc71;letter-spacing:1px">🎲 SORTEIO EM ANDAMENTO</div>
+      </div>
+      <div id="alertaBox" style="display:none"></div>
     <div id="bingoBox"></div>
     <div class="cartelas-tabs" id="cartTabs" style="padding:6px 10px 0;display:flex;gap:4px;flex-shrink:0"></div>
     <div id="cartScroll" style="padding:6px 10px 10px;display:flex;flex-direction:column;align-items:center">
@@ -660,9 +663,11 @@ function registrarEventos(nome){
   });
  sock.on('numero_sorteado',function(d){
     nums=d.sorteados||nums;
-    document.getElementById('nAtual').textContent=d.numero;
+document.getElementById('nAtual').textContent=d.numero;
     var ab=document.getElementById('aguardandoBox');
     if(ab)ab.style.display='none';
+    var sb=document.getElementById('sorteioStatusBox');
+    if(sb)sb.style.display='block';
     cartelas.forEach(function(c){
       if(marc[c.id].indexOf(d.numero)===-1)marc[c.id].push(d.numero);
     });
@@ -722,6 +727,10 @@ sock.on('alerta_jogador',function(d){
     document.getElementById('bingoBox').innerHTML='';
     var alerta=document.getElementById('alertaJogador');
     if(alerta&&document.body.contains(alerta))document.body.removeChild(alerta);
+    var sb=document.getElementById('sorteioStatusBox');
+    if(sb)sb.style.display='none';
+    var ab=document.getElementById('aguardandoBox');
+    if(ab)ab.style.display='block';
     var nome=localStorage.getItem('luxbingo_nome_'+COD)||'Jogador';
     salvarLocal(nome);
     renderCartelas();renderGrid();
@@ -751,6 +760,10 @@ sock.on('alerta_jogador',function(d){
     document.getElementById('bingoBox').innerHTML='';
     var alerta=document.getElementById('alertaJogador');
     if(alerta&&document.body.contains(alerta))document.body.removeChild(alerta);
+    var sb=document.getElementById('sorteioStatusBox');
+    if(sb)sb.style.display='none';
+    var ab=document.getElementById('aguardandoBox');
+    if(ab)ab.style.display='block';
     tela(1);toast('⚠️ Cartelas resetadas pelo ADM!');
   });
 }
@@ -1038,7 +1051,8 @@ window.onload=function(){
     .then(function(r){return r.json();})
     .then(function(d){
       if(!d.ok){
-        document.querySelector('.tela.ativo').innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;text-align:center">'
+        var t1=document.getElementById('t1');
+        if(t1)t1.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;text-align:center">'
           +'<div style="font-size:56px;margin-bottom:16px">😔</div>'
           +'<div style="font-size:20px;font-weight:900;color:var(--gold2);margin-bottom:8px">Sala não encontrada</div>'
           +'<div style="font-size:13px;color:var(--textl);line-height:1.7;max-width:280px">Este link de bingo não está mais disponível.<br><br>Peça um novo link ao organizador do bingo.</div>'
@@ -1237,8 +1251,8 @@ function sorteiarNumero(sala) {
 
 app.get('/sala/:codigo', (req, res) => {
   const s = salas[req.params.codigo?.toUpperCase()];
-  if (!s) return res.json({ ok: false });
-  res.json({ ok: true, valorCartela: s.valorCartela, horario: s.horario });
+  if (!s) return res.json({ ok: false, erro: 'Sala não encontrada' });
+  res.json({ ok: true, valorCartela: s.valorCartela, horario: s.horario, ativa: s.ativa });
 });
 app.get('/cartela/:codigo/:cartelaId', (req, res) => {
   const cartelaId = req.params.cartelaId.toUpperCase();

@@ -1908,6 +1908,19 @@ io.to(codigo).emit('bingo_confirmado', { vencedor: { ...s.vencedor, chavePix }, 
     cb({ ok: true });
   });
 
+  socket.on('editar_sala', ({ codigo, valorCartela, chavePix, horario, youtubeLink, mpToken, porc }, cb) => {
+    const s = salas[codigo];
+    if (!s || s.adm.socketId !== socket.id) return cb && cb({ ok: false });
+    if (valorCartela) s.valorCartela = parseFloat(valorCartela);
+    if (chavePix) s.chavePix = chavePix;
+    if (horario !== undefined) s.horario = horario;
+    if (youtubeLink !== undefined) s.youtubeLink = youtubeLink && !youtubeLink.startsWith('APP_USR') ? youtubeLink : '';
+    if (mpToken !== undefined) s.mpToken = mpToken;
+    if (porc !== undefined) s.porc = parseFloat(porc) || 20;
+    salvarSalas();
+    cb && cb({ ok: true });
+  });
+
   socket.on('anunciar_premio', ({ codigo, premio }, cb) => {
     const s = salas[codigo];
     if (!s || s.adm.socketId !== socket.id) return cb && cb({ ok: false });
