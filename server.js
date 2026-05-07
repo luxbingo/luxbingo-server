@@ -1051,7 +1051,8 @@ window.onload=function(){
     .then(function(r){return r.json();})
     .then(function(d){
       if(!d.ok){
-        document.querySelector('.tela.ativo').innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;text-align:center">'
+        var t1=document.getElementById('t1');
+        if(t1)t1.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;text-align:center">'
           +'<div style="font-size:56px;margin-bottom:16px">😔</div>'
           +'<div style="font-size:20px;font-weight:900;color:var(--gold2);margin-bottom:8px">Sala não encontrada</div>'
           +'<div style="font-size:13px;color:var(--textl);line-height:1.7;max-width:280px">Este link de bingo não está mais disponível.<br><br>Peça um novo link ao organizador do bingo.</div>'
@@ -1250,8 +1251,8 @@ function sorteiarNumero(sala) {
 
 app.get('/sala/:codigo', (req, res) => {
   const s = salas[req.params.codigo?.toUpperCase()];
-  if (!s) return res.json({ ok: false });
-  res.json({ ok: true, valorCartela: s.valorCartela, horario: s.horario });
+  if (!s) return res.json({ ok: false, erro: 'Sala não encontrada' });
+  res.json({ ok: true, valorCartela: s.valorCartela, horario: s.horario, ativa: s.ativa });
 });
 app.get('/cartela/:codigo/:cartelaId', (req, res) => {
   const cartelaId = req.params.cartelaId.toUpperCase();
