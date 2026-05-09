@@ -1162,7 +1162,13 @@ async function carregarSalas() {
     const d = await r.json();
     if (d.result) {
       const salvas = JSON.parse(d.result);
+      const seteDias = 7 * 24 * 60 * 60 * 1000;
       for (const cod of Object.keys(salvas)) {
+        if (salvas[cod]?.criadoEm && Date.now() - salvas[cod].criadoEm > seteDias) {
+          delete salvas[cod];
+          continue;
+        }
+        if (salvas[cod]?.adm) salvas[cod].adm.socketId = null;
         if (salvas[cod]?.adm) salvas[cod].adm.socketId = null;
         if (salvas[cod]?.jogadoresPorIdUnico) {
           for (const id of Object.keys(salvas[cod].jogadoresPorIdUnico)) {
@@ -1600,8 +1606,9 @@ io.on('connection', (socket) => {
     
     const cartelas = gerarBolao(codigo, quantidadeCartelas || 100);
     
-    salas[codigo] = {
-      codigo, 
+salas[codigo] = {
+      codigo,
+      criadoEm: Date.now(),
       adm: { socketId: socket.id, nome: nomeAdm },
       jogadoresPorIdUnico: {},
       jogadoresPorSocket: {},
