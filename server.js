@@ -1338,7 +1338,8 @@ app.post('/webhook-mp', async (req, res) => {
   }
 
   try {
-    for (const [codigo, sala] of Object.entries(salas)) {
+   for (const [codigo, sala] of Object.entries(salas)) {
+      console.log('[WEBHOOK] verificando sala:', codigo, 'mpToken:', sala.mpToken ? 'OK' : 'VAZIO');
       if (!sala.mpToken) continue;
       
       const r = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {

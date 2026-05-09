@@ -1324,9 +1324,10 @@ app.post('/webhook-mp', async (req, res) => {
   res.sendStatus(200);
   console.log('[WEBHOOK] recebido:', JSON.stringify(req.body));
   
-  const { type, data } = req.body;
-  if (type !== 'payment') {
-    console.log('[WEBHOOK] tipo ignorado:', type);
+  const { type, action, data } = req.body;
+  const tipoEvento = type || (action && action.startsWith('payment') ? 'payment' : null);
+  if (tipoEvento !== 'payment') {
+    console.log('[WEBHOOK] tipo ignorado:', tipoEvento);
     return;
   }
   
@@ -1691,8 +1692,11 @@ io.on('connection', (socket) => {
     const cj = s.cartelasVendidasPorIdUnico[idUnico] || [];
     if (cj.length >= 5) return cb({ ok: false, erro: 'Máximo de 5 cartelas!' });
     
-    const sol = s.solicitacoes[idUnico];
+   const sol = s.solicitacoes[idUnico];
     const cjAtual = s.cartelasVendidasPorIdUnico[idUnico] || [];
+    if (cjAtual.length > 0) return cb({ ok: false, erro: 'Sua cartela já foi liberada! Recarregue a página.' });
+    if (sol && sol.status === 'pendente' && s.mpToken) return cb({ ok: false, erro: 'Pagamento em processamento. Aguarde ou recarregue a página.' });
+    if (sol && sol.status === 'pendente' && !s.mpToken) return cb({ ok: false, erro: 'Você já tem uma solicitação pendente.' });
     if (sol && sol.status === 'pendente') return cb({ ok: false, erro: 'Você já tem uma solicitação pendente.' });
     if (cjAtual.length > 0) return cb({ ok: false, erro: 'Sua cartela já foi liberada! Recarregue a página.' });
     
