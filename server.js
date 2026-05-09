@@ -1063,9 +1063,18 @@ window.onload=function(){
   var elCpf=document.getElementById('iCpf');
   var elCel=document.getElementById('iCel');
   var elCod=document.getElementById('iCodCart');
-  if(elCpf)elCpf.oninput=function(){
-    var v=this.value.replace(/\D/g,'');
-    v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+ if(elCpf)elCpf.oninput=function(){
+    var v=this.value.replace(/\D/g,'').slice(0,11);
+    if(v.length>9)v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4');
+    else if(v.length>6)v=v.replace(/(\d{3})(\d{3})(\d{1,3})/,'$1.$2.$3');
+    else if(v.length>3)v=v.replace(/(\d{3})(\d{1,3})/,'$1.$2');
+    this.value=v;
+  };
+  if(elCel)elCel.oninput=function(){
+    var v=this.value.replace(/\D/g,'').slice(0,11);
+    if(v.length>10)v=v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
+    else if(v.length>6)v=v.replace(/(\d{2})(\d{4,5})(\d{0,4})/,'($1) $2-$3');
+    else if(v.length>2)v=v.replace(/(\d{2})(\d+)/,'($1) $2');
     this.value=v;
   };
   if(elCel)elCel.oninput=function(){
