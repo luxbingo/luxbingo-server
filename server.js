@@ -1305,6 +1305,7 @@ app.post('/criar-pagamento/:codigo', async (req, res) => {
       })
     });
     const d = await r.json();
+    console.log('[MP RESPONSE] sala:', codigo, 'status:', d.status, 'id:', d.id, 'erro:', d.message||d.error||'');
     if (!d.id) return res.json({ ok: false, erro: d.message || 'Erro MP' });
     res.json({
       ok: true,
