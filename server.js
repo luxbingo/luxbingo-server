@@ -1264,6 +1264,17 @@ function sorteiarNumero(sala) {
   return { numero: num, sorteados: s.sorteados };
 }
 
+app.get('/minhas-salas', (req, res) => {
+  const lista = Object.values(salas).map((s) => ({
+    codigo: s.codigo,
+    nome: s.adm?.nome || '',
+    valorCartela: s.valorCartela,
+    chavePix: s.chavePix,
+    horario: s.horario,
+    porc: s.porc
+  }));
+  res.json({ ok: true, salas: lista });
+});
 app.get('/sala/:codigo', (req, res) => {
   const s = salas[req.params.codigo?.toUpperCase()];
   if (!s) return res.json({ ok: false, erro: 'Sala não encontrada' });
