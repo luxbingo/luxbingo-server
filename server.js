@@ -1264,6 +1264,14 @@ function sorteiarNumero(sala) {
   return { numero: num, sorteados: s.sorteados };
 }
 
+app.get('/admin/limpar-tudo', (req, res) => {
+  const qtd = Object.keys(salas).length;
+  for (const cod of Object.keys(salas)) {
+    delete salas[cod];
+  }
+  salvarSalas();
+  res.json({ ok: true, removidas: qtd });
+});
 app.get('/minhas-salas', (req, res) => {
   const lista = Object.values(salas).map((s) => ({
     codigo: s.codigo,
