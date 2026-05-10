@@ -1275,7 +1275,7 @@ app.get('/admin/limpar-tudo', (req, res) => {
 app.get('/minhas-salas', (req, res) => {
   const lista = Object.values(salas).map((s) => ({
     codigo: s.codigo,
-    nome: s.adm?.nome || '',
+    nome: s.nome || s.adm?.nome || '',
     valorCartela: s.valorCartela,
     chavePix: s.chavePix,
     horario: s.horario,
