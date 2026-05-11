@@ -12,6 +12,13 @@ const io = new Server(server, {
   pingInterval: 10000,
 });
 
+app.use((req, res, next) => {
+  const ua = req.headers['user-agent'] || '';
+  if (ua.includes('facebookexternalhit') || ua.includes('Facebot')) {
+    res.setHeader('X-Robots-Tag', 'all');
+  }
+  next();
+});
 app.get('/', (_, res) => res.send('Lux Bingo Server online ✅'));
 app.get('/robots.txt', (_, res) => {
   res.type('text/plain');
