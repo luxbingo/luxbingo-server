@@ -284,7 +284,7 @@ document.getElementById('btnRecuperar').onclick=function(){
         nome=nomeInput&&nomeInput.value.trim()||'Jogador';
       }
       localStorage.setItem('luxbingo_nome_'+COD,nome);
-      if(d.youtubeLink){window._mediaLink=d.youtubeLink;setYoutube(d.youtubeLink);}
+      if(d.youtubeLink)setYoutube(d.youtubeLink);
       conectarJogo(nome);
       tela(3);
       renderCartelas();
@@ -646,7 +646,7 @@ function registrarEventos(nome){
       nums=d.sorteados||nums;
       nums.forEach(function(n){if(marc[cart.id].indexOf(n)===-1)marc[cart.id].push(n);});
     });
-    if(d.youtubeLink){window._mediaLink=d.youtubeLink;setYoutube(d.youtubeLink);}
+    if(d.youtubeLink)setYoutube(d.youtubeLink);
     salvarLocal(nome);
     mostrarTelaSalvar(novas, function(){
       mostrarYoutube();
@@ -780,7 +780,6 @@ function conectarJogo(nome){
   sock.on('connect_error',function(){});
   sock.once('connect',function(){
     sock.emit('entrar_sala',{codigo:COD,idUnico:meuIdUnico,nomeJogador:nome},function(r){
-      console.log('[ENTRAR_SALA]', JSON.stringify(r));
       if(r&&r.ok){
         nums=r.sorteados||nums;
         if(r.youtubeLink){setYoutube(r.youtubeLink);mostrarYoutube();}
@@ -812,7 +811,7 @@ function conectarJogo(nome){
     sock.emit('entrar_sala',{codigo:COD,idUnico:meuIdUnico,nomeJogador:nome},function(r){
       if(r&&r.ok){
         nums=r.sorteados||nums;
-        if(r.youtubeLink){window._mediaLink=r.youtubeLink;setYoutube(r.youtubeLink);mostrarYoutube();}
+        if(r.youtubeLink){setYoutube(r.youtubeLink);mostrarYoutube();}
         cartelas.forEach(function(c){
           if(!marc[c.id])marc[c.id]=[];
           nums.forEach(function(n){
@@ -857,52 +856,18 @@ function toggleAudioCart(){
 var ytVid='';
 function setYoutube(link){
   if(!link)return;
-  var m=link.match(/(?:youtu\.be\/|v=|live\/|shorts\/)([\w-]{11})/);
-  if(!m){var m2=link.match(/youtube\.com\/([\w-]{11})/);if(m2)m=m2;}
+  var m=link.match(/(?:youtu\\.be\\/|v=|live\\/|shorts\\/)([\\w-]{11})/);
+  if(!m){var m2=link.match(/youtube\\.com\\/([\\w-]{11})/);if(m2)m=m2;}
   if(m)ytVid=m[1];
 }
 function mostrarYoutube(){
-  if(!ytVid&&!window._mediaLink)return;
+  if(!ytVid)return;
   var wrap=document.getElementById('ytWrap');
+  var frame=document.getElementById('ytFrame');
   var h=Math.round(window.innerWidth*9/16);
   wrap.style.display='block';
-  wrap.innerHTML='';
-  var link=window._mediaLink||'';
-  // YouTube
-  if(ytVid){
-    var frame=document.createElement('iframe');
-    frame.style.cssText='width:100%;height:'+h+'px;display:block;border:none';
-    frame.allowFullscreen=true;
-    frame.allow='autoplay';
-    frame.src='https://www.youtube.com/embed/'+ytVid+'?autoplay=1&mute=0';
-    wrap.appendChild(frame);
-  }
-  // Imagem
-  else if(link.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)||link.includes('imgur.com')){
-    var img=document.createElement('img');
-    img.src=link;
-    img.style.cssText='width:100%;max-height:35vh;object-fit:contain;display:block;background:#000';
-    wrap.appendChild(img);
-  }
-  // Vídeo mp4
-  else if(link.match(/\.(mp4|webm|ogg)(\?.*)?$/i)){
-    var vid=document.createElement('video');
-    vid.src=link;
-    vid.controls=true;
-    vid.autoplay=true;
-    vid.style.cssText='width:100%;max-height:35vh;display:block;background:#000';
-    wrap.appendChild(vid);
-  }
-  // Google Drive
-  else if(link.includes('drive.google.com')){
-    var fileId=link.match(/\/d\/([^\/]+)/);
-    if(fileId){
-      var frame2=document.createElement('iframe');
-      frame2.style.cssText='width:100%;height:'+h+'px;display:block;border:none';
-      frame2.src='https://drive.google.com/file/d/'+fileId[1]+'/preview';
-      wrap.appendChild(frame2);
-    }
-  }
+  frame.style.height=h+'px';
+  frame.src='https://www.youtube.com/embed/'+ytVid+'?autoplay=1&mute=0';
 }
 function renderGrid(){
   var g=document.getElementById('nGrid');if(!g)return;var u=nums[nums.length-1];
