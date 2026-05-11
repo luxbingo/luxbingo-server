@@ -12,18 +12,7 @@ const io = new Server(server, {
   pingInterval: 10000,
 });
 
-app.use((req, res, next) => {
-  const ua = req.headers['user-agent'] || '';
-  if (ua.includes('facebookexternalhit') || ua.includes('Facebot')) {
-    res.setHeader('X-Robots-Tag', 'all');
-  }
-  next();
-});
 app.get('/', (_, res) => res.send('Lux Bingo Server online ✅'));
-app.get('/robots.txt', (_, res) => {
-  res.type('text/plain');
-  res.send('User-agent: *\nAllow: /\nUser-agent: facebookexternalhit\nAllow: /');
-});
 app.get('/health', (_, res) => res.json({ status: 'ok', salas: Object.keys(salas).length }));
 app.get('/sala-adm/:admId', (req, res) => {
   const admId = req.params.admId.toUpperCase();
