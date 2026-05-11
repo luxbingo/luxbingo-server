@@ -780,6 +780,7 @@ function conectarJogo(nome){
   sock.on('connect_error',function(){});
   sock.once('connect',function(){
     sock.emit('entrar_sala',{codigo:COD,idUnico:meuIdUnico,nomeJogador:nome},function(r){
+      console.log('[ENTRAR_SALA]', JSON.stringify(r));
       if(r&&r.ok){
         nums=r.sorteados||nums;
         if(r.youtubeLink){setYoutube(r.youtubeLink);mostrarYoutube();}
