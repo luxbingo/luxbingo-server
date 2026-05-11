@@ -811,7 +811,7 @@ function conectarJogo(nome){
     sock.emit('entrar_sala',{codigo:COD,idUnico:meuIdUnico,nomeJogador:nome},function(r){
       if(r&&r.ok){
         nums=r.sorteados||nums;
-        if(r.youtubeLink){setYoutube(r.youtubeLink);mostrarYoutube();}
+        if(r.youtubeLink){window._mediaLink=r.youtubeLink;setYoutube(r.youtubeLink);mostrarYoutube();}
         cartelas.forEach(function(c){
           if(!marc[c.id])marc[c.id]=[];
           nums.forEach(function(n){
