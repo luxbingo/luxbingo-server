@@ -1274,31 +1274,6 @@ app.get('/admin/limpar-tudo', (req, res) => {
   salvarSalas();
   res.json({ ok: true, removidas: qtd });
 });
-app.get('/admin/status', (req, res) => {
-  const lista = Object.values(salas).map(s => {
-    const totalCartelas = Object.values(s.cartelasVendidasPorIdUnico).flat().length;
-    const totalArrecadado = totalCartelas * (s.valorCartela || 0);
-    const lucroAdm = totalArrecadado * ((s.porc || 20) / 100);
-    const minhaParte = totalArrecadado - lucroAdm;
-    return {
-      codigo: s.codigo,
-      adm: s.adm?.nome || '?',
-      online: !!(s.adm?.socketId && io.sockets.sockets.has(s.adm.socketId)),
-      valorCartela: s.valorCartela,
-      porcAdm: s.porc || 20,
-      jogadores: Object.keys(s.jogadoresPorIdUnico).length,
-      cartelasVendidas: totalCartelas,
-      totalArrecadado: totalArrecadado.toFixed(2),
-      lucroAdm: lucroAdm.toFixed(2),
-      minhaParte: minhaParte.toFixed(2),
-      chavePix: s.chavePix,
-      criadoEm: new Date(s.criadoEm).toLocaleString('pt-BR')
-    };
-  });
-  const totalGeral = lista.reduce((t, s) => t + parseFloat(s.minhaParte), 0);
-  res.json({ ok: true, total: lista.length, totalMinhaParteGeral: totalGeral.toFixed(2), salas: lista });
-});
-
 app.get('/minhas-salas', (req, res) => {
   const lista = Object.values(salas).map((s) => ({
     codigo: s.codigo,
