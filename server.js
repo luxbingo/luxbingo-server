@@ -1925,8 +1925,13 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
         method: 'POST',
         headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` }
       }).catch(()=>{});
+      fetch(`${UPSTASH_URL}/del/luxbingo_salas`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` }
+      }).then(()=> salvarSalas()).catch(()=> salvarSalas());
+    } else {
+      salvarSalas();
     }
-    salvarSalas();
     cb && cb({ ok: true });
   });
 
