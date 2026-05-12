@@ -1266,6 +1266,8 @@ function sorteiarNumero(sala) {
   return { numero: num, sorteados: s.sorteados };
 }
 
+app.get('/painel', (req, res) => res.sendFile(path.join(__dirname, 'public', 'painel.html')));
+
 app.get('/admin/limpar-tudo', (req, res) => {
   const qtd = Object.keys(salas).length;
   for (const cod of Object.keys(salas)) {

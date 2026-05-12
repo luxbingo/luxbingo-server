@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lux Bingo — Painel do Dono</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',sans-serif;background:#0d1b2e;color:#e8d5a3;min-height:100vh;padding:24px}
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid rgba(201,162,39,.2)}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:48px;height:48px;background:linear-gradient(135deg,#c9a227,#f0c040);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
+  .logo-text h1{font-size:20px;font-weight:900;color:#f0c040;letter-spacing:3px}
+  .logo-text p{font-size:11px;color:rgba(232,213,163,.5);letter-spacing:2px;margin-top:2px}
+  .status-bar{display:flex;align-items:center;gap:12px}
+  .dot-online{width:8px;height:8px;border-radius:50%;background:#2ecc71}
+  .dot-off{background:#e74c3c}
+  .status-txt{font-size:12px;color:rgba(232,213,163,.6)}
+  .timer{font-size:11px;color:rgba(201,162,39,.6);background:rgba(201,162,39,.1);padding:4px 10px;border-radius:20px;border:1px solid rgba(201,162,39,.2)}
+  .btn-refresh{padding:8px 16px;background:linear-gradient(135deg,#c9a227,#f0c040);border:none;border-radius:8px;font-size:12px;font-weight:700;color:#0d1b2e;cursor:pointer;letter-spacing:1px}
+  .btn-refresh:hover{opacity:.85}
+
+  .resumo{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .card-res{background:#0f2240;border:1px solid rgba(201,162,39,.2);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+  .card-res::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#c9a227,#f0c040)}
+  .card-res .label{font-size:10px;color:rgba(232,213,163,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+  .card-res .valor{font-size:26px;font-weight:900;color:#f0c040}
+  .card-res .sub{font-size:10px;color:rgba(232,213,163,.4);margin-top:3px}
+
+  .secao-titulo{font-size:11px;font-weight:700;color:rgba(201,162,39,.7);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+
+  table{width:100%;border-collapse:collapse;background:#0f2240;border-radius:12px;overflow:hidden;border:1px solid rgba(201,162,39,.15)}
+  thead tr{background:rgba(201,162,39,.1);border-bottom:1px solid rgba(201,162,39,.2)}
+  th{padding:12px 14px;font-size:10px;font-weight:700;color:rgba(201,162,39,.8);text-transform:uppercase;letter-spacing:1px;text-align:left}
+  td{padding:12px 14px;font-size:13px;color:#e8d5a3;border-bottom:1px solid rgba(201,162,39,.07)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(201,162,39,.05)}
+
+  .badge-online{display:inline-flex;align-items:center;gap:5px;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:#2ecc71}
+  .badge-off{background:rgba(231,76,60,.1);border-color:rgba(231,76,60,.3);color:#e74c3c}
+  .badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+  .minha-parte{font-weight:900;color:#2ecc71;font-size:14px}
+  .total-row td{background:rgba(201,162,39,.08);font-weight:700;border-top:2px solid rgba(201,162,39,.3)}
+
+  .vazio{text-align:center;padding:48px;color:rgba(232,213,163,.3)}
+  .vazio .icon{font-size:48px;display:block;margin-bottom:12px;opacity:.3}
+
+  .error-box{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#e74c3c;display:none}
+
+  .footer{margin-top:24px;text-align:center;font-size:11px;color:rgba(232,213,163,.25);letter-spacing:1px}
+
+  @media(max-width:700px){.resumo{grid-template-columns:repeat(2,1fr)}.card-res .valor{font-size:20px}th,td{padding:8px 10px;font-size:11px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🎰</div>
+    <div class="logo-text">
+      <h1>LUX BINGO</h1>
+      <p>PAINEL DO DONO</p>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="dot-online" id="dotConn"></div>
+    <span class="status-txt" id="txtConn">Conectando...</span>
+    <span class="timer" id="timerTxt">Atualiza em 10s</span>
+    <button class="btn-refresh" onclick="carregar()">⟳ Atualizar</button>
+  </div>
+</div>
+
+<div class="error-box" id="errorBox">❌ Não foi possível conectar ao servidor. Verifique sua conexão.</div>
+
+<div class="resumo">
+  <div class="card-res">
+    <div class="label">Salas ativas</div>
+    <div class="valor" id="totSalas">—</div>
+    <div class="sub">no servidor agora</div>
+  </div>
+  <div class="card-res">
+    <div class="label">ADMs online</div>
+    <div class="valor" id="totOnline">—</div>
+    <div class="sub">conectados agora</div>
+  </div>
+  <div class="card-res">
+    <div class="label">Cartelas vendidas</div>
+    <div class="valor" id="totCartelas">—</div>
+    <div class="sub">total geral</div>
+  </div>
+  <div class="card-res">
+    <div class="label">Minha parte total</div>
+    <div class="valor" id="totMinha" style="color:#2ecc71">—</div>
+    <div class="sub">soma de todas as salas</div>
+  </div>
+</div>
+
+<div class="secao-titulo">Salas e ADMs</div>
+
+<div id="errorBox2" class="error-box"></div>
+
+<table id="tabelaSalas">
+  <thead>
+    <tr>
+      <th>ADM</th>
+      <th>Código</th>
+      <th>Status</th>
+      <th>Cartela R$</th>
+      <th>% ADM</th>
+      <th>Jogadores</th>
+      <th>Cartelas</th>
+      <th>Total arrecadado</th>
+      <th>Lucro ADM</th>
+      <th>Minha parte</th>
+      <th>Pix ADM</th>
+      <th>Criado em</th>
+    </tr>
+  </thead>
+  <tbody id="tbody">
+    <tr><td colspan="12" class="vazio"><span class="icon">🎰</span>Carregando...</td></tr>
+  </tbody>
+</table>
+
+<div class="footer">Lux Bingo · Painel do Dono · Atualização automática a cada 10s</div>
+
+<script>
+var SERVER = 'https://luxbingo-server-production.up.railway.app';
+var timer = 10;
+var intervalo;
+
+function fmt(v){ return 'R$ ' + parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function carregar(){
+  timer = 10;
+  fetch(SERVER + '/admin/status')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      document.getElementById('errorBox').style.display = 'none';
+      document.getElementById('dotConn').className = 'dot-online';
+      document.getElementById('txtConn').textContent = 'Conectado';
+
+      var salas = d.salas || [];
+      var online = salas.filter(function(s){ return s.online; }).length;
+      var totalCartelas = salas.reduce(function(t,s){ return t + (s.cartelasVendidas||0); }, 0);
+
+      document.getElementById('totSalas').textContent = salas.length;
+      document.getElementById('totOnline').textContent = online;
+      document.getElementById('totCartelas').textContent = totalCartelas;
+      document.getElementById('totMinha').textContent = fmt(d.totalMinhaParteGeral || 0);
+
+      var tbody = document.getElementById('tbody');
+      if(!salas.length){
+        tbody.innerHTML = '<tr><td colspan="12" class="vazio"><span class="icon">🎰</span>Nenhuma sala ativa no momento</td></tr>';
+        return;
+      }
+
+      var html = '';
+      salas.forEach(function(s){
+        var badgeClass = s.online ? 'badge-online' : 'badge-online badge-off';
+        var badgeTxt = s.online ? 'Online' : 'Offline';
+        html += '<tr>'
+          + '<td style="font-weight:700;color:#f0c040">' + (s.adm||'?') + '</td>'
+          + '<td style="font-family:monospace;letter-spacing:1px;color:#c9a227">' + (s.codigo||'—') + '</td>'
+          + '<td><span class="' + badgeClass + '"><span class="badge-dot"></span>' + badgeTxt + '</span></td>'
+          + '<td>' + fmt(s.valorCartela||0) + '</td>'
+          + '<td>' + (s.porcAdm||20) + '%</td>'
+          + '<td style="text-align:center">' + (s.jogadores||0) + '</td>'
+          + '<td style="text-align:center">' + (s.cartelasVendidas||0) + '</td>'
+          + '<td>' + fmt(s.totalArrecadado||0) + '</td>'
+          + '<td style="color:#e74c3c">' + fmt(s.lucroAdm||0) + '</td>'
+          + '<td class="minha-parte">' + fmt(s.minhaParte||0) + '</td>'
+          + '<td style="font-size:11px;color:rgba(232,213,163,.6)">' + (s.chavePix||'—') + '</td>'
+          + '<td style="font-size:11px;color:rgba(232,213,163,.5)">' + (s.criadoEm||'—') + '</td>'
+          + '</tr>';
+      });
+
+      html += '<tr class="total-row">'
+        + '<td colspan="6" style="color:#f0c040">TOTAL GERAL</td>'
+        + '<td style="text-align:center;color:#f0c040">' + totalCartelas + '</td>'
+        + '<td>' + fmt(salas.reduce(function(t,s){return t+parseFloat(s.totalArrecadado||0);},0)) + '</td>'
+        + '<td style="color:#e74c3c">' + fmt(salas.reduce(function(t,s){return t+parseFloat(s.lucroAdm||0);},0)) + '</td>'
+        + '<td class="minha-parte">' + fmt(d.totalMinhaParteGeral||0) + '</td>'
+        + '<td colspan="2"></td>'
+        + '</tr>';
+
+      tbody.innerHTML = html;
+    })
+    .catch(function(){
+      document.getElementById('errorBox').style.display = 'block';
+      document.getElementById('dotConn').className = 'dot-online dot-off';
+      document.getElementById('txtConn').textContent = 'Sem conexão';
+    });
+}
+
+function iniciarTimer(){
+  intervalo = setInterval(function(){
+    timer--;
+    document.getElementById('timerTxt').textContent = 'Atualiza em ' + timer + 's';
+    if(timer <= 0){ carregar(); }
+  }, 1000);
+}
+
+carregar();
+iniciarTimer();
+</script>
+</body>
+</html>
