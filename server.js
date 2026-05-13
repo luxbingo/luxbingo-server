@@ -5,6 +5,7 @@ const path = require('path');
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/painel', (req, res) => res.sendFile(path.join(__dirname, 'public', 'painel.html')));
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: '*' },
