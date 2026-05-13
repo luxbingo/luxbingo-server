@@ -1288,7 +1288,7 @@ app.get('/admin/status', (req, res) => {
   let totalMinhaParteGeral = 0;
   for (const [cod, s] of Object.entries(salas)) {
     if (!s) continue;
-    const cartelasVendidas = Object.values(s.cartelasVendidasPorIdUnico).reduce((t, c) => t + c.length, 0);
+    const cartelasVendidas = Object.values(s.cartelasVendidasPorIdUnico || {}).reduce((t, c) => t + (c?.length||0), 0);
     const totalArrecadado = cartelasVendidas * (s.valorCartela || 0);
     const porcAdm = s.porc || 20;
     const lucroAdm = totalArrecadado * (porcAdm / 100);
