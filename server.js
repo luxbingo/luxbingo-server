@@ -861,8 +861,8 @@ function setYoutube(link){
   var frame=document.getElementById('ytFrame');
   var h=Math.round(window.innerWidth*9/16);
   // YouTube
-  var m=link.match(/(?:youtu\.be\/|v=|live\/|shorts\/)([\w-]{11})/);
-  if(!m){var m2=link.match(/youtube\.com\/([\w-]{11})/);if(m2)m=m2;}
+  var m=link.match(/(?:youtu\\.be\\/|v=|live\\/|shorts\\/)([\w-]{11})/);
+  if(!m){var m2=link.match(/youtube\\.com\\/([\w-]{11})/);if(m2)m=m2;}
   if(m){
     ytVid=m[1];
     return;
