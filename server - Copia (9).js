@@ -1063,14 +1063,18 @@ window.onload=function(){
   var elCpf=document.getElementById('iCpf');
   var elCel=document.getElementById('iCel');
   var elCod=document.getElementById('iCodCart');
-  if(elCpf)elCpf.oninput=function(){
-    var v=this.value.replace(/\D/g,'');
-    v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+ if(elCpf)elCpf.oninput=function(){
+    var v=this.value.replace(/\D/g,'').slice(0,11);
+    if(v.length>9)v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4');
+    else if(v.length>6)v=v.replace(/(\d{3})(\d{3})(\d{1,3})/,'$1.$2.$3');
+    else if(v.length>3)v=v.replace(/(\d{3})(\d{1,3})/,'$1.$2');
     this.value=v;
   };
   if(elCel)elCel.oninput=function(){
-    var v=this.value.replace(/\D/g,'');
-    v=v.replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d{1,4})$/,'$1-$2');
+    var v=this.value.replace(/\D/g,'').slice(0,11);
+    if(v.length>10)v=v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
+    else if(v.length>6)v=v.replace(/(\d{2})(\d{4,5})(\d{0,4})/,'($1) $2-$3');
+    else if(v.length>2)v=v.replace(/(\d{2})(\d+)/,'($1) $2');
     this.value=v;
   };
   if(elCod)elCod.oninput=function(){this.value=this.value.toUpperCase();};
@@ -1112,9 +1116,11 @@ const UPSTASH_TOKEN = process.env.UPSTASH_TOKEN;
 async function salvarSalas() {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return;
   try {
-    const salasReduzidas = {};
+  const salasReduzidas = {};
+    const umDia = 24 * 60 * 60 * 1000;
     for (const [cod, s] of Object.entries(salas)) {
       if (!s) continue;
+      if (s.criadoEm && Date.now() - s.criadoEm > umDia) continue;
       salasReduzidas[cod] = {
         ...s,
         cartelas: [],
@@ -1153,7 +1159,13 @@ async function carregarSalas() {
     const d = await r.json();
     if (d.result) {
       const salvas = JSON.parse(d.result);
+      const seteDias = 7 * 24 * 60 * 60 * 1000;
       for (const cod of Object.keys(salvas)) {
+        if (salvas[cod]?.criadoEm && Date.now() - salvas[cod].criadoEm > seteDias) {
+          delete salvas[cod];
+          continue;
+        }
+        if (salvas[cod]?.adm) salvas[cod].adm.socketId = null;
         if (salvas[cod]?.adm) salvas[cod].adm.socketId = null;
         if (salvas[cod]?.jogadoresPorIdUnico) {
           for (const id of Object.keys(salvas[cod].jogadoresPorIdUnico)) {
@@ -1249,6 +1261,25 @@ function sorteiarNumero(sala) {
   return { numero: num, sorteados: s.sorteados };
 }
 
+app.get('/admin/limpar-tudo', (req, res) => {
+  const qtd = Object.keys(salas).length;
+  for (const cod of Object.keys(salas)) {
+    delete salas[cod];
+  }
+  salvarSalas();
+  res.json({ ok: true, removidas: qtd });
+});
+app.get('/minhas-salas', (req, res) => {
+  const lista = Object.values(salas).map((s) => ({
+    codigo: s.codigo,
+    nome: s.nome || s.adm?.nome || '',
+    valorCartela: s.valorCartela,
+    chavePix: s.chavePix,
+    horario: s.horario,
+    porc: s.porc
+  }));
+  res.json({ ok: true, salas: lista });
+});
 app.get('/sala/:codigo', (req, res) => {
   const s = salas[req.params.codigo?.toUpperCase()];
   if (!s) return res.json({ ok: false, erro: 'Sala não encontrada' });
@@ -1305,6 +1336,7 @@ app.post('/criar-pagamento/:codigo', async (req, res) => {
       })
     });
     const d = await r.json();
+    console.log('[MP RESPONSE] sala:', codigo, 'status:', d.status, 'id:', d.id, 'erro:', d.message||d.error||'');
     if (!d.id) return res.json({ ok: false, erro: d.message || 'Erro MP' });
     res.json({
       ok: true,
@@ -1324,9 +1356,10 @@ app.post('/webhook-mp', async (req, res) => {
   res.sendStatus(200);
   console.log('[WEBHOOK] recebido:', JSON.stringify(req.body));
   
-  const { type, data } = req.body;
-  if (type !== 'payment') {
-    console.log('[WEBHOOK] tipo ignorado:', type);
+  const { type, action, data } = req.body;
+  const tipoEvento = type || (action && action.startsWith('payment') ? 'payment' : null);
+  if (tipoEvento !== 'payment') {
+    console.log('[WEBHOOK] tipo ignorado:', tipoEvento);
     return;
   }
   
@@ -1337,7 +1370,8 @@ app.post('/webhook-mp', async (req, res) => {
   }
 
   try {
-    for (const [codigo, sala] of Object.entries(salas)) {
+   for (const [codigo, sala] of Object.entries(salas)) {
+      console.log('[WEBHOOK] verificando sala:', codigo, 'mpToken:', sala.mpToken ? 'OK' : 'VAZIO');
       if (!sala.mpToken) continue;
       
       const r = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
@@ -1588,8 +1622,9 @@ io.on('connection', (socket) => {
     
     const cartelas = gerarBolao(codigo, quantidadeCartelas || 100);
     
-    salas[codigo] = {
-      codigo, 
+salas[codigo] = {
+      codigo,
+      criadoEm: Date.now(),
       adm: { socketId: socket.id, nome: nomeAdm },
       jogadoresPorIdUnico: {},
       jogadoresPorSocket: {},
@@ -1691,8 +1726,11 @@ io.on('connection', (socket) => {
     const cj = s.cartelasVendidasPorIdUnico[idUnico] || [];
     if (cj.length >= 5) return cb({ ok: false, erro: 'Máximo de 5 cartelas!' });
     
-    const sol = s.solicitacoes[idUnico];
+   const sol = s.solicitacoes[idUnico];
     const cjAtual = s.cartelasVendidasPorIdUnico[idUnico] || [];
+    if (cjAtual.length > 0) return cb({ ok: false, erro: 'Sua cartela já foi liberada! Recarregue a página.' });
+    if (sol && sol.status === 'pendente' && s.mpToken) return cb({ ok: false, erro: 'Pagamento em processamento. Aguarde ou recarregue a página.' });
+    if (sol && sol.status === 'pendente' && !s.mpToken) return cb({ ok: false, erro: 'Você já tem uma solicitação pendente.' });
     if (sol && sol.status === 'pendente') return cb({ ok: false, erro: 'Você já tem uma solicitação pendente.' });
     if (cjAtual.length > 0) return cb({ ok: false, erro: 'Sua cartela já foi liberada! Recarregue a página.' });
     
@@ -1882,8 +1920,13 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
         method: 'POST',
         headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` }
       }).catch(()=>{});
+      fetch(`${UPSTASH_URL}/del/luxbingo_salas`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` }
+      }).then(()=> salvarSalas()).catch(()=> salvarSalas());
+    } else {
+      salvarSalas();
     }
-    salvarSalas();
     cb && cb({ ok: true });
   });
 
