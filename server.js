@@ -1261,6 +1261,26 @@ function sorteiarNumero(sala) {
   return { numero: num, sorteados: s.sorteados };
 }
 
+app.get('/painel', (req, res) => res.sendFile(path.join(__dirname, 'public', 'painel.html')));
+
+app.get('/admin/status', (req, res) => {
+  const resultado = [];
+  let totalMinhaParteGeral = 0;
+  for (const [cod, s] of Object.entries(salas)) {
+    if (!s) continue;
+    const cartelasVendidas = Object.values(s.cartelasVendidasPorIdUnico || {}).reduce((t, c) => t + (c?.length||0), 0);
+    const totalArrecadado = cartelasVendidas * (s.valorCartela || 0);
+    const porcAdm = s.porc || 20;
+    const lucroAdm = totalArrecadado * (porcAdm / 100);
+    const minhaParte = totalArrecadado * (1 - porcAdm / 100);
+    totalMinhaParteGeral += minhaParte;
+    const online = !!(s.adm?.socketId && io.sockets.sockets.has(s.adm.socketId));
+    const jogadores = Object.values(s.jogadoresPorIdUnico || {}).filter(j => j?.socketId && io.sockets.sockets.has(j.socketId)).length;
+    resultado.push({ adm: s.adm?.nome||'?', codigo: cod, online, valorCartela: s.valorCartela||0, porcAdm, jogadores, cartelasVendidas, totalArrecadado, lucroAdm, minhaParte, chavePix: s.chavePix||'', criadoEm: s.criadoEm ? new Date(s.criadoEm).toLocaleString('pt-BR') : '—' });
+  }
+  res.json({ ok: true, salas: resultado, totalMinhaParteGeral });
+});
+
 app.get('/admin/limpar-tudo', (req, res) => {
   const qtd = Object.keys(salas).length;
   for (const cod of Object.keys(salas)) {
