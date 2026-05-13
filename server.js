@@ -856,9 +856,30 @@ function toggleAudioCart(){
 var ytVid='';
 function setYoutube(link){
   if(!link)return;
-  var m=link.match(/(?:youtu\\.be\\/|v=|live\\/|shorts\\/)([\\w-]{11})/);
-  if(!m){var m2=link.match(/youtube\\.com\\/([\\w-]{11})/);if(m2)m=m2;}
-  if(m)ytVid=m[1];
+  var wrap=document.getElementById('ytWrap');
+  var frame=document.getElementById('ytFrame');
+  var h=Math.round(window.innerWidth*9/16);
+  // YouTube
+  var m=link.match(/(?:youtu\.be\/|v=|live\/|shorts\/)([\w-]{11})/);
+  if(!m){var m2=link.match(/youtube\.com\/([\w-]{11})/);if(m2)m=m2;}
+  if(m){
+    ytVid=m[1];
+    return;
+  }
+  // Imagem
+  if(link.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)){
+    wrap.style.display='block';
+    wrap.style.maxHeight='35vh';
+    wrap.innerHTML='<img src="'+link+'" style="width:100%;max-height:35vh;object-fit:contain;display:block;background:#000">';
+    return;
+  }
+  // Vídeo
+  if(link.match(/\.(mp4|webm|ogg)(\?.*)?$/i)){
+    wrap.style.display='block';
+    wrap.style.maxHeight='35vh';
+    wrap.innerHTML='<video src="'+link+'" style="width:100%;max-height:35vh;display:block;background:#000" controls autoplay muted playsinline></video>';
+    return;
+  }
 }
 function mostrarYoutube(){
   if(!ytVid)return;
@@ -1260,6 +1281,37 @@ function sorteiarNumero(sala) {
   s.sorteados.push(num);
   return { numero: num, sorteados: s.sorteados };
 }
+
+app.get('/admin/status', (req, res) => {
+  const resultado = [];
+  let totalMinhaParteGeral = 0;
+  for (const [cod, s] of Object.entries(salas)) {
+    if (!s) continue;
+    const cartelasVendidas = Object.values(s.cartelasVendidasPorIdUnico).reduce((t, c) => t + c.length, 0);
+    const totalArrecadado = cartelasVendidas * (s.valorCartela || 0);
+    const porcAdm = s.porc || 20;
+    const lucroAdm = totalArrecadado * (porcAdm / 100);
+    const minhaParte = totalArrecadado * (1 - porcAdm / 100);
+    totalMinhaParteGeral += minhaParte;
+    const online = !!(s.adm?.socketId && io.sockets.sockets.has(s.adm.socketId));
+    const jogadores = Object.values(s.jogadoresPorIdUnico).filter(j => j?.socketId && io.sockets.sockets.has(j.socketId)).length;
+    resultado.push({
+      adm: s.adm?.nome || '?',
+      codigo: cod,
+      online,
+      valorCartela: s.valorCartela || 0,
+      porcAdm,
+      jogadores,
+      cartelasVendidas,
+      totalArrecadado,
+      lucroAdm,
+      minhaParte,
+      chavePix: s.chavePix || '',
+      criadoEm: s.criadoEm ? new Date(s.criadoEm).toLocaleString('pt-BR') : '—'
+    });
+  }
+  res.json({ ok: true, salas: resultado, totalMinhaParteGeral });
+});
 
 app.get('/admin/limpar-tudo', (req, res) => {
   const qtd = Object.keys(salas).length;
