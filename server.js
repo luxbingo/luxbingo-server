@@ -1077,11 +1077,6 @@ window.onload=function(){
     else if(v.length>2)v=v.replace(/(\d{2})(\d+)/,'($1) $2');
     this.value=v;
   };
-  if(elCel)elCel.oninput=function(){
-    var v=this.value.replace(/\D/g,'');
-    v=v.replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d{1,4})$/,'$1-$2');
-    this.value=v;
-  };
   if(elCod)elCod.oninput=function(){this.value=this.value.toUpperCase();};
   renderGrid();
   var params=new URLSearchParams(window.location.search);
