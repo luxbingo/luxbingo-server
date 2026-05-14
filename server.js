@@ -1161,6 +1161,10 @@ async function carregarSalas() {
       const salvas = JSON.parse(d.result);
       const seteDias = 7 * 24 * 60 * 60 * 1000;
       for (const cod of Object.keys(salvas)) {
+        if (cod === '0' || cod === '1' || !isNaN(Number(cod))) {
+          delete salvas[cod];
+          continue;
+        }
         if (salvas[cod]?.criadoEm && Date.now() - salvas[cod].criadoEm > seteDias) {
           delete salvas[cod];
           continue;
