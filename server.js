@@ -1230,11 +1230,16 @@ function gerarCartela90(usados) {
 
 function gerarBolao(sala, qtd) {
   const cartelas = [];
-  const usados = [];
-  for (let i = 0; i < qtd; i++) {
-    const grid = gerarCartela90(usados);
-    grid.forEach(row => row.forEach(v => { if (v !== 'FREE' && usados.indexOf(v) === -1) usados.push(v); }));
+  const gridsGerados = [];
+  let i = 0, tentativas = 0;
+  while (i < qtd && tentativas < qtd * 10) {
+    tentativas++;
+    const grid = gerarCartela90([]);
+    const hash = grid.map(row => row.join(',')).join('|');
+    if (gridsGerados.indexOf(hash) !== -1) continue;
+    gridsGerados.push(hash);
     cartelas.push({ id: `${sala}-${i + 1}`, numero: i + 1, grid });
+    i++;
   }
   return cartelas;
 }
@@ -1854,10 +1859,11 @@ salas[codigo] = {
     const res = sorteiarNumero(codigo);
     if (!res) return cb({ ok: false, erro: 'Sem números restantes' });
     
-    const totalCartelas = Object.values(s.cartelasVendidasPorIdUnico).reduce((t, c) => t + c.length, 0);
+   const totalCartelas = Object.values(s.cartelasVendidasPorIdUnico).reduce((t, c) => t + c.length, 0);
     const premioEstimado = totalCartelas * s.valorCartela * (1 - (s.porc||20)/100);
     io.to(codigo).emit('numero_sorteado', { ...res, premioEstimado });
     
+    const vencedores = [];
 Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
       const nome = s.jogadoresPorIdUnico[idUnico]?.nome || 'Jogador';
       const celular = s.solicitacoes[idUnico]?.celular || '';
@@ -1880,19 +1886,25 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
       });
 
       if (melhorBingo && !s.vencedor) {
-        s.vencedor = { idUnico, nome: s.jogadoresPorIdUnico[idUnico]?.nome, cartelaId: (carts[0]?.id || '') };
-        s.ativa = false;
-        salvarSalas();
-        const chavePix = s.solicitacoes[idUnico]?.chavePix || '';
-        console.log('[AUTO-BINGO] chavePix:', chavePix, 'idUnico:', idUnico);
-        io.to(codigo).emit('bingo_confirmado', { vencedor: { ...s.vencedor, chavePix }, sorteados: s.sorteados });
-        io.to(s.adm.socketId).emit('parar_sorteio');
-      } else if (melhorQuase) {
+        vencedores.push({
+          idUnico,
+          nome: s.jogadoresPorIdUnico[idUnico]?.nome,
+          cartelaId: carts[0]?.id || '',
+          chavePix: s.solicitacoes[idUnico]?.chavePix || ''
+        });
+      }else if (melhorQuase) {
         io.to(s.adm.socketId).emit('alerta_jogador', { nome: nomeExib, tipo: 'quase', texto: '🔥 '+nomeExib+' — falta 1!' });
         io.to(codigo).emit('alerta_geral', { nome: nomeExib, tipo: 'quase', texto: '🔥 Falta 1!' });
         if (socketJogador) io.to(socketJogador).emit('alerta_jogador', { nome: nomeExib, tipo: 'quase', texto: '🔥 Falta 1 número!' });
       }
     });
+    if (vencedores.length > 0 && !s.vencedor) {
+      s.vencedor = vencedores[0];
+      s.ativa = false;
+      salvarSalas();
+      io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, sorteados: s.sorteados });
+      io.to(s.adm.socketId).emit('parar_sorteio');
+    }
     cb({ ok: true, ...res });
   });
 
