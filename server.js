@@ -857,8 +857,35 @@ var ytVid='';
 var slideTimer=null;
 function setYoutube(link,slideIntervalo){
   if(!link)return;
-  // Para slideshow anterior
   if(slideTimer){clearInterval(slideTimer);slideTimer=null;}
+  var m=link.match(/(?:youtu\\.be\\/|v=|live\\/|shorts\\/)([\\w-]{11})/);
+  if(!m){var m2=link.match(/youtube\\.com\\/([\\w-]{11})/);if(m2)m=m2;}
+  if(m){ytVid=m[1];return;}
+  var links=link.split(',').map(function(l){return l.trim();}).filter(Boolean);
+  var wrap=document.getElementById('ytWrap');
+  wrap.style.display='block';
+  wrap.style.maxHeight='35vh';
+  var idx=0;
+  var pausado=false;
+  function mostrarSlide(){
+    if(pausado)return;
+    var l=links[idx];
+    if(l.match(/\\.(jpg|jpeg|png|gif|webp)(\\?.*)?$/i)){
+      wrap.innerHTML='<img src="'+l+'" style="width:100%;max-height:35vh;object-fit:contain;display:block;background:#000;cursor:pointer" id="slideImg">';
+      var img=document.getElementById('slideImg');
+      if(img){
+        img.onmousedown=img.ontouchstart=function(){pausado=true;};
+        img.onmouseup=img.ontouchend=function(){pausado=false;};
+      }
+    }
+    idx=(idx+1)%links.length;
+  }
+  mostrarSlide();
+  if(links.length>1){
+    var intv=(slideIntervalo||3)*1000;
+    if(intv>0)slideTimer=setInterval(mostrarSlide,intv);
+  }
+}
   // YouTube
   var m=link.match(/(?:youtu\\.be\\/|v=|live\\/|shorts\\/)([\\w-]{11})/);
   if(!m){var m2=link.match(/youtube\\.com\\/([\\w-]{11})/);if(m2)m=m2;}

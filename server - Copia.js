@@ -334,7 +334,7 @@ document.getElementById('btnConectar').onclick=function(){
         var pb=document.getElementById('premioJogBox');var pv=document.getElementById('premioJogVal');
         if(pb&&pv){pb.style.display='block';pv.textContent='R$ '+r.premioEstimado.toLocaleString('pt-BR',{minimumFractionDigits:2});}
       }
-      if(r.youtubeLink){setYoutube(r.youtubeLink);}
+      if(r.youtubeLink){setYoutube(r.youtubeLink, r.slideIntervalo);}
       if(r.cartelasExistentes && r.cartelasExistentes.length > 0) {
         cartelas = r.cartelasExistentes;
         nums = r.sorteados || [];
@@ -807,10 +807,10 @@ function conectarJogo(nome){
       }
     });
   });
- sock.on('connect', function(){
+sock.on('connect', function(){
     sock.emit('entrar_sala',{codigo:COD,idUnico:meuIdUnico,nomeJogador:nome},function(r){
       if(r&&r.ok){
-        nums=r.sorteados||nums;
+        nums=r.sorteados||[];
         if(r.youtubeLink){setYoutube(r.youtubeLink);mostrarYoutube();}
         cartelas.forEach(function(c){
           if(!marc[c.id])marc[c.id]=[];
@@ -854,11 +854,50 @@ function toggleAudioCart(){
   if(bMain){bMain.textContent=audioOn?'🔊 Áudio ON':'🔇 Áudio OFF';bMain.style.borderColor=audioOn?'rgba(201,162,39,.4)':'rgba(231,76,60,.5)';bMain.style.color=audioOn?'var(--gold2)':'#e74c3c';}
 }
 var ytVid='';
-function setYoutube(link){
+var slideTimer=null;
+function setYoutube(link,slideIntervalo){
   if(!link)return;
+  // Para slideshow anterior
+  if(slideTimer){clearInterval(slideTimer);slideTimer=null;}
+  // YouTube
   var m=link.match(/(?:youtu\\.be\\/|v=|live\\/|shorts\\/)([\\w-]{11})/);
   if(!m){var m2=link.match(/youtube\\.com\\/([\\w-]{11})/);if(m2)m=m2;}
-  if(m)ytVid=m[1];
+  if(m){ytVid=m[1];return;}
+  // Slideshow (múltiplas URLs separadas por vírgula)
+  var links=link.split(',').map(function(l){return l.trim();}).filter(Boolean);
+  if(links.length>1){
+    var wrap=document.getElementById('ytWrap');
+    var idx=0;
+    function mostrarSlide(){
+      var l=links[idx];
+      wrap.style.display='block';
+      wrap.style.maxHeight='35vh';
+      if(l.match(/\\.(jpg|jpeg|png|gif|webp)(\\?.*)?$/i)){
+        wrap.innerHTML='<img src="'+l+'" style="width:100%;max-height:35vh;object-fit:contain;display:block;background:#000">';
+      }
+      idx=(idx+1)%links.length;
+    }
+    mostrarSlide();
+    var intv=(slideIntervalo||3)*1000;
+    if(intv>0)slideTimer=setInterval(mostrarSlide,intv);
+    return;
+  }
+  // Imagem única
+  if(link.match(/\\.(jpg|jpeg|png|gif|webp)(\\?.*)?$/i)){
+    var wrap=document.getElementById('ytWrap');
+    wrap.style.display='block';
+    wrap.style.maxHeight='35vh';
+    wrap.innerHTML='<img src="'+link+'" style="width:100%;max-height:35vh;object-fit:contain;display:block;background:#000">';
+    return;
+  }
+  // Vídeo
+  if(link.match(/\\.(mp4|webm|ogg)(\\?.*)?$/i)){
+    var wrap=document.getElementById('ytWrap');
+    wrap.style.display='block';
+    wrap.style.maxHeight='35vh';
+    wrap.innerHTML='<video src="'+link+'" style="width:100%;max-height:35vh;display:block;background:#000" controls autoplay muted playsinline></video>';
+    return;
+  }
 }
 function mostrarYoutube(){
   if(!ytVid)return;
@@ -1161,6 +1200,10 @@ async function carregarSalas() {
       const salvas = JSON.parse(d.result);
       const seteDias = 7 * 24 * 60 * 60 * 1000;
       for (const cod of Object.keys(salvas)) {
+        if (cod === '0' || cod === '1' || !isNaN(Number(cod))) {
+          delete salvas[cod];
+          continue;
+        }
         if (salvas[cod]?.criadoEm && Date.now() - salvas[cod].criadoEm > seteDias) {
           delete salvas[cod];
           continue;
@@ -1230,11 +1273,16 @@ function gerarCartela90(usados) {
 
 function gerarBolao(sala, qtd) {
   const cartelas = [];
-  const usados = [];
-  for (let i = 0; i < qtd; i++) {
-    const grid = gerarCartela90(usados);
-    grid.forEach(row => row.forEach(v => { if (v !== 'FREE' && usados.indexOf(v) === -1) usados.push(v); }));
+  const gridsGerados = [];
+  let i = 0, tentativas = 0;
+  while (i < qtd && tentativas < qtd * 10) {
+    tentativas++;
+    const grid = gerarCartela90([]);
+    const hash = grid.map(row => row.join(',')).join('|');
+    if (gridsGerados.indexOf(hash) !== -1) continue;
+    gridsGerados.push(hash);
     cartelas.push({ id: `${sala}-${i + 1}`, numero: i + 1, grid });
+    i++;
   }
   return cartelas;
 }
@@ -1632,7 +1680,7 @@ io.on('connection', (socket) => {
     cb && cb({ ok: true, totalJogadores: totalJogadores });
   });
 
-  socket.on('criar_sala', ({ nomeAdm, valorCartela, chavePix, quantidadeCartelas, horario, youtubeLink, mpToken, porc }, cb) => {
+  socket.on('criar_sala', ({ nomeAdm, valorCartela, chavePix, quantidadeCartelas, horario, youtubeLink, mpToken, porc, slideIntervalo }, cb) => {
     if (!nomeAdm) return cb({ ok: false, erro: 'Nome do administrador é obrigatório' });
     if (!valorCartela && valorCartela !== 0) return cb({ ok: false, erro: 'Valor da cartela é obrigatório' });
     if (!chavePix) return cb({ ok: false, erro: 'Chave Pix é obrigatória' });
@@ -1657,7 +1705,8 @@ salas[codigo] = {
       valorCartela: parseFloat(valorCartela) || 0, 
       chavePix: chavePix || '',
       horario: horario || '', 
-      youtubeLink: (youtubeLink && !youtubeLink.startsWith('APP_USR') && !youtubeLink.startsWith('TEST-')) ? youtubeLink : '',
+youtubeLink: (youtubeLink && !youtubeLink.startsWith('APP_USR') && !youtubeLink.startsWith('TEST-')) ? youtubeLink : '',
+slideIntervalo: slideIntervalo || 3,
       mpToken: mpToken || '',
       porc: parseFloat(porc) || 20,
       vencedor: null,
@@ -1733,8 +1782,9 @@ salas[codigo] = {
   valorCartela: s.valorCartela,
   chavePix: s.chavePix,
   horario: s.horario,
-  youtubeLink: s.youtubeLink,
-  cartelasExistentes: cartelasExistentes,
+youtubeLink: s.youtubeLink,
+slideIntervalo: s.slideIntervalo || 3,
+cartelasExistentes: cartelasExistentes,
   premioEstimado: s.ativa ? premioEstimado : null
 });
   });
@@ -1854,10 +1904,11 @@ salas[codigo] = {
     const res = sorteiarNumero(codigo);
     if (!res) return cb({ ok: false, erro: 'Sem números restantes' });
     
-    const totalCartelas = Object.values(s.cartelasVendidasPorIdUnico).reduce((t, c) => t + c.length, 0);
+   const totalCartelas = Object.values(s.cartelasVendidasPorIdUnico).reduce((t, c) => t + c.length, 0);
     const premioEstimado = totalCartelas * s.valorCartela * (1 - (s.porc||20)/100);
     io.to(codigo).emit('numero_sorteado', { ...res, premioEstimado });
     
+    const vencedores = [];
 Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
       const nome = s.jogadoresPorIdUnico[idUnico]?.nome || 'Jogador';
       const celular = s.solicitacoes[idUnico]?.celular || '';
@@ -1880,19 +1931,25 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
       });
 
       if (melhorBingo && !s.vencedor) {
-        s.vencedor = { idUnico, nome: s.jogadoresPorIdUnico[idUnico]?.nome, cartelaId: (carts[0]?.id || '') };
-        s.ativa = false;
-        salvarSalas();
-        const chavePix = s.solicitacoes[idUnico]?.chavePix || '';
-        console.log('[AUTO-BINGO] chavePix:', chavePix, 'idUnico:', idUnico);
-        io.to(codigo).emit('bingo_confirmado', { vencedor: { ...s.vencedor, chavePix }, sorteados: s.sorteados });
-        io.to(s.adm.socketId).emit('parar_sorteio');
-      } else if (melhorQuase) {
+        vencedores.push({
+          idUnico,
+          nome: s.jogadoresPorIdUnico[idUnico]?.nome,
+          cartelaId: carts[0]?.id || '',
+          chavePix: s.solicitacoes[idUnico]?.chavePix || ''
+        });
+      }else if (melhorQuase) {
         io.to(s.adm.socketId).emit('alerta_jogador', { nome: nomeExib, tipo: 'quase', texto: '🔥 '+nomeExib+' — falta 1!' });
         io.to(codigo).emit('alerta_geral', { nome: nomeExib, tipo: 'quase', texto: '🔥 Falta 1!' });
         if (socketJogador) io.to(socketJogador).emit('alerta_jogador', { nome: nomeExib, tipo: 'quase', texto: '🔥 Falta 1 número!' });
       }
     });
+    if (vencedores.length > 0 && !s.vencedor) {
+      s.vencedor = vencedores[0];
+      s.ativa = false;
+      salvarSalas();
+      io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, sorteados: s.sorteados });
+      io.to(s.adm.socketId).emit('parar_sorteio');
+    }
     cb({ ok: true, ...res });
   });
 
