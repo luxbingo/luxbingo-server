@@ -578,7 +578,7 @@ function mostrarTelaSalvar(novas, onJogar){
  
   // Botão JOGAR — oculto até salvar
   var btnJogar=document.createElement('button');
-  btnJogar.textContent='▶ AGUARDANDO O SORTEIO';
+  btnJogar.textContent='▶ O SORTEIO SERÁ';
   btnJogar.style.cssText='width:100%;max-width:340px;padding:15px;background:linear-gradient(135deg,#155c30,#25a05a);border:none;border-radius:13px;font-size:15px;font-weight:900;color:#fff;font-family:Georgia,serif;letter-spacing:2px;cursor:pointer;display:none';
  
   var salvou=false;
