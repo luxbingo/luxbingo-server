@@ -33,9 +33,6 @@ const LOGO = 'https://luxbingo-server-production.up.railway.app/logo.png';
 
 app.get('/jogo/:codigo', (req, res) => {
   const codigo = req.params.codigo.toUpperCase();
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-  res.set('Pragma', 'no-cache');
-  if (!salas[codigo]) return res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lux Bingo</title><style>body{background:#0d1b2e;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:24px}</style></head><body><div><div style="font-size:56px">😔</div><div style="font-size:20px;font-weight:900;color:#f0c040;margin:12px 0">Sala não encontrada</div><div style="font-size:13px;color:rgba(232,213,163,.6)">Este link não está mais disponível.<br>Peça um novo link ao organizador.</div></div></body></html>`);
   res.send(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
