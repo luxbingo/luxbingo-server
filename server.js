@@ -872,7 +872,7 @@ function setYoutube(link,slideIntervalo){
       var l=links[idx];
       wrap.style.display='block';
       wrap.style.maxHeight='35vh';
-      if(l.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)){
+      if(l.match(/\\.(jpg|jpeg|png|gif|webp)(\\?.*)?$/i)){
         wrap.innerHTML='<img src="'+l+'" style="width:100%;max-height:35vh;object-fit:contain;display:block;background:#000">';
       }
       idx=(idx+1)%links.length;
@@ -883,7 +883,7 @@ function setYoutube(link,slideIntervalo){
     return;
   }
   // Imagem única
-  if(link.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)){
+  if(link.match(/\\.(jpg|jpeg|png|gif|webp)(\\?.*)?$/i)){
     var wrap=document.getElementById('ytWrap');
     wrap.style.display='block';
     wrap.style.maxHeight='35vh';
@@ -891,7 +891,7 @@ function setYoutube(link,slideIntervalo){
     return;
   }
   // Vídeo
-  if(link.match(/\.(mp4|webm|ogg)(\?.*)?$/i)){
+  if(link.match(/\\.(mp4|webm|ogg)(\\?.*)?$/i)){
     var wrap=document.getElementById('ytWrap');
     wrap.style.display='block';
     wrap.style.maxHeight='35vh';
