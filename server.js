@@ -807,10 +807,10 @@ function conectarJogo(nome){
       }
     });
   });
- sock.on('connect', function(){
+sock.on('connect', function(){
     sock.emit('entrar_sala',{codigo:COD,idUnico:meuIdUnico,nomeJogador:nome},function(r){
       if(r&&r.ok){
-        nums=r.sorteados||nums;
+        nums=r.sorteados||[];
         if(r.youtubeLink){setYoutube(r.youtubeLink);mostrarYoutube();}
         cartelas.forEach(function(c){
           if(!marc[c.id])marc[c.id]=[];
