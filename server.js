@@ -748,7 +748,11 @@ sock.on('alerta_jogador',function(d){
     }
     toast('🏆 Prêmio: ' + d.premio);
   });
-  sock.on('cartelas_limpas',function(){
+  sock.on('atualizar_midia',function(d){
+  if(slideTimer){clearInterval(slideTimer);slideTimer=null;}
+  if(d.youtubeLink){setYoutube(d.youtubeLink,d.slideIntervalo);}
+});
+sock.on('cartelas_limpas',function(){
     try{
       var n=localStorage.getItem('luxbingo_nome_'+COD)||'Jogador';
       var chave='luxbingo_'+COD+'_'+n.replace(/\s/g,'_');
@@ -2027,8 +2031,12 @@ io.to(codigo).emit('bingo_confirmado', { vencedor: { ...s.vencedor, chavePix }, 
     if (mpToken !== undefined) s.mpToken = mpToken;
     if (porc !== undefined) s.porc = parseFloat(porc) || 20;
 if (slideIntervalo !== undefined) s.slideIntervalo = slideIntervalo;
-    salvarSalas();
-    cb && cb({ ok: true });
+salvarSalas();
+io.to(codigo).emit('atualizar_midia', {
+  youtubeLink: s.youtubeLink,
+  slideIntervalo: s.slideIntervalo || 3
+});
+cb && cb({ ok: true });
   });
 
   socket.on('anunciar_premio', ({ codigo, premio }, cb) => {
