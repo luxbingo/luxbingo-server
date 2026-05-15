@@ -334,7 +334,7 @@ document.getElementById('btnConectar').onclick=function(){
         var pb=document.getElementById('premioJogBox');var pv=document.getElementById('premioJogVal');
         if(pb&&pv){pb.style.display='block';pv.textContent='R$ '+r.premioEstimado.toLocaleString('pt-BR',{minimumFractionDigits:2});}
       }
-      if(r.youtubeLink){setYoutube(r.youtubeLink);}
+      if(r.youtubeLink){setYoutube(r.youtubeLink, r.slideIntervalo);}
       if(r.cartelasExistentes && r.cartelasExistentes.length > 0) {
         cartelas = r.cartelasExistentes;
         nums = r.sorteados || [];
@@ -854,11 +854,50 @@ function toggleAudioCart(){
   if(bMain){bMain.textContent=audioOn?'🔊 Áudio ON':'🔇 Áudio OFF';bMain.style.borderColor=audioOn?'rgba(201,162,39,.4)':'rgba(231,76,60,.5)';bMain.style.color=audioOn?'var(--gold2)':'#e74c3c';}
 }
 var ytVid='';
-function setYoutube(link){
+var slideTimer=null;
+function setYoutube(link,slideIntervalo){
   if(!link)return;
+  // Para slideshow anterior
+  if(slideTimer){clearInterval(slideTimer);slideTimer=null;}
+  // YouTube
   var m=link.match(/(?:youtu\\.be\\/|v=|live\\/|shorts\\/)([\\w-]{11})/);
   if(!m){var m2=link.match(/youtube\\.com\\/([\\w-]{11})/);if(m2)m=m2;}
-  if(m)ytVid=m[1];
+  if(m){ytVid=m[1];return;}
+  // Slideshow (múltiplas URLs separadas por vírgula)
+  var links=link.split(',').map(function(l){return l.trim();}).filter(Boolean);
+  if(links.length>1){
+    var wrap=document.getElementById('ytWrap');
+    var idx=0;
+    function mostrarSlide(){
+      var l=links[idx];
+      wrap.style.display='block';
+      wrap.style.maxHeight='35vh';
+      if(l.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)){
+        wrap.innerHTML='<img src="'+l+'" style="width:100%;max-height:35vh;object-fit:contain;display:block;background:#000">';
+      }
+      idx=(idx+1)%links.length;
+    }
+    mostrarSlide();
+    var intv=(slideIntervalo||3)*1000;
+    if(intv>0)slideTimer=setInterval(mostrarSlide,intv);
+    return;
+  }
+  // Imagem única
+  if(link.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)){
+    var wrap=document.getElementById('ytWrap');
+    wrap.style.display='block';
+    wrap.style.maxHeight='35vh';
+    wrap.innerHTML='<img src="'+link+'" style="width:100%;max-height:35vh;object-fit:contain;display:block;background:#000">';
+    return;
+  }
+  // Vídeo
+  if(link.match(/\.(mp4|webm|ogg)(\?.*)?$/i)){
+    var wrap=document.getElementById('ytWrap');
+    wrap.style.display='block';
+    wrap.style.maxHeight='35vh';
+    wrap.innerHTML='<video src="'+link+'" style="width:100%;max-height:35vh;display:block;background:#000" controls autoplay muted playsinline></video>';
+    return;
+  }
 }
 function mostrarYoutube(){
   if(!ytVid)return;
@@ -1641,7 +1680,7 @@ io.on('connection', (socket) => {
     cb && cb({ ok: true, totalJogadores: totalJogadores });
   });
 
-  socket.on('criar_sala', ({ nomeAdm, valorCartela, chavePix, quantidadeCartelas, horario, youtubeLink, mpToken, porc }, cb) => {
+  socket.on('criar_sala', ({ nomeAdm, valorCartela, chavePix, quantidadeCartelas, horario, youtubeLink, mpToken, porc, slideIntervalo }, cb) => {
     if (!nomeAdm) return cb({ ok: false, erro: 'Nome do administrador é obrigatório' });
     if (!valorCartela && valorCartela !== 0) return cb({ ok: false, erro: 'Valor da cartela é obrigatório' });
     if (!chavePix) return cb({ ok: false, erro: 'Chave Pix é obrigatória' });
@@ -1666,7 +1705,9 @@ salas[codigo] = {
       valorCartela: parseFloat(valorCartela) || 0, 
       chavePix: chavePix || '',
       horario: horario || '', 
-      youtubeLink: (youtubeLink && !youtubeLink.startsWith('APP_USR') && !youtubeLink.startsWith('TEST-')) ? youtubeLink : '',
+youtubeLink: s.youtubeLink,
+slideIntervalo: s.slideIntervalo || 3,
+cartelasExistentes: cartelasExistentes,
       mpToken: mpToken || '',
       porc: parseFloat(porc) || 20,
       vencedor: null,
@@ -1742,8 +1783,9 @@ salas[codigo] = {
   valorCartela: s.valorCartela,
   chavePix: s.chavePix,
   horario: s.horario,
-  youtubeLink: s.youtubeLink,
-  cartelasExistentes: cartelasExistentes,
+youtubeLink: s.youtubeLink,
+slideIntervalo: s.slideIntervalo || 3,
+cartelasExistentes: cartelasExistentes,
   premioEstimado: s.ativa ? premioEstimado : null
 });
   });
