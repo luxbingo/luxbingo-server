@@ -886,46 +886,7 @@ function setYoutube(link,slideIntervalo){
     if(intv>0)slideTimer=setInterval(mostrarSlide,intv);
   }
 }
-  // YouTube
-  var m=link.match(/(?:youtu\\.be\\/|v=|live\\/|shorts\\/)([\\w-]{11})/);
-  if(!m){var m2=link.match(/youtube\\.com\\/([\\w-]{11})/);if(m2)m=m2;}
-  if(m){ytVid=m[1];return;}
-  // Slideshow (múltiplas URLs separadas por vírgula)
-  var links=link.split(',').map(function(l){return l.trim();}).filter(Boolean);
-  if(links.length>1){
-    var wrap=document.getElementById('ytWrap');
-    var idx=0;
-    function mostrarSlide(){
-      var l=links[idx];
-      wrap.style.display='block';
-      wrap.style.maxHeight='35vh';
-      if(l.match(/\\.(jpg|jpeg|png|gif|webp)(\\?.*)?$/i)){
-        wrap.innerHTML='<img src="'+l+'" style="width:100%;max-height:35vh;object-fit:contain;display:block;background:#000">';
-      }
-      idx=(idx+1)%links.length;
-    }
-    mostrarSlide();
-    var intv=(slideIntervalo||3)*1000;
-    if(intv>0)slideTimer=setInterval(mostrarSlide,intv);
-    return;
-  }
-  // Imagem única
-  if(link.match(/\\.(jpg|jpeg|png|gif|webp)(\\?.*)?$/i)){
-    var wrap=document.getElementById('ytWrap');
-    wrap.style.display='block';
-    wrap.style.maxHeight='35vh';
-    wrap.innerHTML='<img src="'+link+'" style="width:100%;max-height:35vh;object-fit:contain;display:block;background:#000">';
-    return;
-  }
-  // Vídeo
-  if(link.match(/\\.(mp4|webm|ogg)(\\?.*)?$/i)){
-    var wrap=document.getElementById('ytWrap');
-    wrap.style.display='block';
-    wrap.style.maxHeight='35vh';
-    wrap.innerHTML='<video src="'+link+'" style="width:100%;max-height:35vh;display:block;background:#000" controls autoplay muted playsinline></video>';
-    return;
-  }
-}
+ 
 function mostrarYoutube(){
   if(!ytVid)return;
   var wrap=document.getElementById('ytWrap');
