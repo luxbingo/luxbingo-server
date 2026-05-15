@@ -208,9 +208,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--text);
         <div class="num-atual" id="nAtual">--</div>
       </div>
      <div id="aguardandoBox" style="flex:1;text-align:center;padding:0 6px">
-        <div style="font-size:clamp(10px,3vw,14px);font-weight:900;color:#ffd966;text-transform:uppercase;letter-spacing:1px;text-shadow:0 0 10px rgba(255,217,102,0.6)">⏳ Aguardando Sorteio</div>
-        <div id="horarioJogBox" style="font-size:clamp(10px,2.5vw,12px);font-weight:700;color:#c9a227;margin-top:2px"></div>
-      </div>
+  <div style="font-size:clamp(10px,3vw,13px);font-weight:900;color:#ffd966;text-transform:uppercase;letter-spacing:1px;text-shadow:0 0 10px rgba(255,217,102,0.6)">⏳ O SORTEIO SERÁ</div>
+  <div id="horarioJogBox" style="font-size:clamp(14px,4vw,20px);font-weight:900;color:#ffd966;margin-top:2px;text-shadow:0 0 8px rgba(255,217,102,0.5)"></div>
+</div>
       <div id="premioJogBox" style="display:none;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:10px;padding:6px 12px;text-align:center;margin-left:auto">
         <div style="font-size:8px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px">🏆 Prêmio</div>
         <div style="font-size:18px;font-weight:900;color:var(--navy)" id="premioJogVal">--</div>
@@ -578,7 +578,7 @@ function mostrarTelaSalvar(novas, onJogar){
  
   // Botão JOGAR — oculto até salvar
   var btnJogar=document.createElement('button');
-  btnJogar.textContent='▶ O SORTEIO SERÁ';
+  btnJogar.textContent='▶ AGUARDANDO O SORTEIO';
   btnJogar.style.cssText='width:100%;max-width:340px;padding:15px;background:linear-gradient(135deg,#155c30,#25a05a);border:none;border-radius:13px;font-size:15px;font-weight:900;color:#fff;font-family:Georgia,serif;letter-spacing:2px;cursor:pointer;display:none';
  
   var salvou=false;
