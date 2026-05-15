@@ -2014,7 +2014,7 @@ io.to(codigo).emit('bingo_confirmado', { vencedor: { ...s.vencedor, chavePix }, 
     cb({ ok: true });
   });
 
-  socket.on('editar_sala', ({ codigo, valorCartela, chavePix, horario, youtubeLink, mpToken, porc, slideIntervalo }, cb) => {
+  socket.on('editar_sala', ({ codigo, valorCartela, chavePix, horario, youtubeLink, mpToken, porc }, cb) => {
     const s = salas[codigo];
     if (!s) return cb && cb({ ok: false });
     if (valorCartela) s.valorCartela = parseFloat(valorCartela);
@@ -2023,7 +2023,6 @@ io.to(codigo).emit('bingo_confirmado', { vencedor: { ...s.vencedor, chavePix }, 
     if (youtubeLink !== undefined) s.youtubeLink = youtubeLink && !youtubeLink.startsWith('APP_USR') ? youtubeLink : '';
     if (mpToken !== undefined) s.mpToken = mpToken;
     if (porc !== undefined) s.porc = parseFloat(porc) || 20;
-if (slideIntervalo !== undefined) s.slideIntervalo = slideIntervalo;
     salvarSalas();
     cb && cb({ ok: true });
   });
