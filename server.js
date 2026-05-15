@@ -870,13 +870,11 @@ function setYoutube(link,slideIntervalo){
   function mostrarSlide(){
     if(pausado)return;
     var l=links[idx];
-    if(l.match(/\\.(jpg|jpeg|png|gif|webp)(\\?.*)?$/i)){
-      wrap.innerHTML='<img src="'+l+'" style="width:100%;max-height:35vh;object-fit:contain;display:block;background:#000;cursor:pointer" id="slideImg">';
-      var img=document.getElementById('slideImg');
-      if(img){
-        img.onmousedown=img.ontouchstart=function(){pausado=true;};
-        img.onmouseup=img.ontouchend=function(){pausado=false;};
-      }
+    wrap.innerHTML='<img src="'+l+'" style="width:100%;max-height:35vh;object-fit:contain;display:block;background:#000;cursor:pointer" id="slideImg">';
+    var img=document.getElementById('slideImg');
+    if(img){
+      img.onmousedown=img.ontouchstart=function(){pausado=true;};
+      img.onmouseup=img.ontouchend=function(){pausado=false;};
     }
     idx=(idx+1)%links.length;
   }
