@@ -1782,8 +1782,9 @@ slideIntervalo: slideIntervalo || 3,
   valorCartela: s.valorCartela,
   chavePix: s.chavePix,
   horario: s.horario,
-youtubeLink: (youtubeLink && !youtubeLink.startsWith('APP_USR') && !youtubeLink.startsWith('TEST-')) ? youtubeLink : '',
-slideIntervalo: slideIntervalo || 3,
+youtubeLink: s.youtubeLink,
+slideIntervalo: s.slideIntervalo || 3,
+cartelasExistentes: cartelasExistentes,
   premioEstimado: s.ativa ? premioEstimado : null
 });
   });
