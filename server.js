@@ -1705,9 +1705,8 @@ salas[codigo] = {
       valorCartela: parseFloat(valorCartela) || 0, 
       chavePix: chavePix || '',
       horario: horario || '', 
-youtubeLink: s.youtubeLink,
-slideIntervalo: s.slideIntervalo || 3,
-cartelasExistentes: cartelasExistentes,
+youtubeLink: (youtubeLink && !youtubeLink.startsWith('APP_USR') && !youtubeLink.startsWith('TEST-')) ? youtubeLink : '',
+slideIntervalo: slideIntervalo || 3,
       mpToken: mpToken || '',
       porc: parseFloat(porc) || 20,
       vencedor: null,
@@ -1783,9 +1782,8 @@ cartelasExistentes: cartelasExistentes,
   valorCartela: s.valorCartela,
   chavePix: s.chavePix,
   horario: s.horario,
-youtubeLink: s.youtubeLink,
-slideIntervalo: s.slideIntervalo || 3,
-cartelasExistentes: cartelasExistentes,
+youtubeLink: (youtubeLink && !youtubeLink.startsWith('APP_USR') && !youtubeLink.startsWith('TEST-')) ? youtubeLink : '',
+slideIntervalo: slideIntervalo || 3,
   premioEstimado: s.ativa ? premioEstimado : null
 });
   });
