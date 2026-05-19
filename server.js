@@ -1948,8 +1948,8 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
       s.vencedor = vencedores[0];
       s.ativa = false;
       salvarSalas();
-      io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, sorteados: s.sorteados });
-      io.to(s.adm.socketId).emit('parar_sorteio');
+     io.to(s.adm.socketId).emit('parar_sorteio');
+io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, sorteados: s.sorteados });
     }
     cb({ ok: true, ...res });
   });
