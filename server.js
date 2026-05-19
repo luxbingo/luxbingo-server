@@ -1992,6 +1992,18 @@ io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, so
   socket.on('deletar_sala', ({ codigo }, cb) => {
     const s = salas[codigo];
     if (!s) return cb && cb({ ok: false });
+    // Apaga mídias do servidor
+    if (s.youtubeLink) {
+      var links = s.youtubeLink.split(',').map(l => l.trim()).filter(l => l.startsWith('https://geribingo.com/uploads/'));
+      links.forEach(function(url) {
+        var nome = url.split('/').pop();
+        fetch('https://geribingo.com/delete.php', {
+          method: 'POST',
+          body: new URLSearchParams({arquivo: nome, senha: 'luxbingo2025'}),
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+        }).catch(()=>{});
+      });
+    }
     delete salas[codigo];
     if (UPSTASH_URL && UPSTASH_TOKEN) {
       fetch(`${UPSTASH_URL}/del/luxbingo_vendidas_${codigo}`, {
