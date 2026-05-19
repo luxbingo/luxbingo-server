@@ -679,7 +679,8 @@ document.getElementById('nAtual').textContent=d.numero;
   });
 sock.on('bingo_confirmado',function(d){
     var b=document.createElement('div');b.className='bingo-banner';
-    b.innerHTML='<span class="bb-icon">🎊</span><div class="bb-title">BINGO!</div><div class="bb-sub">Vencedor: '+d.vencedor.nome+'</div>';
+    var lista=d.vencedores||[d.vencedor];
+    b.innerHTML='<span class="bb-icon">🎊</span><div class="bb-title">BINGO!</div><div class="bb-sub">Vencedor'+(lista.length>1?'es: ':': ')+lista.map(function(v){return v.nome;}).join(', ')+'</div>';
     document.getElementById('bingoBox').innerHTML='';document.getElementById('bingoBox').appendChild(b);
   });
 sock.on('alerta_jogador',function(d){
