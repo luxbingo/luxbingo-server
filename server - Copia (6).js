@@ -1578,25 +1578,6 @@ app.get('/teste-bingo/:codigo', (req, res) => {
   });
 });
 
-app.post('/deletar-sala-http/:codigo', (req, res) => {
-  const codigo = req.params.codigo?.toUpperCase();
-  const s = salas[codigo];
-  if (!s) return res.json({ ok: false });
-  if (s.youtubeLink) {
-    s.youtubeLink.split(',').map(l => l.trim()).filter(l => l.startsWith('https://geribingo.com/uploads/')).forEach(url => {
-      const nome = url.split('/').pop();
-      fetch('https://geribingo.com/delete.php', {
-        method: 'POST',
-        body: new URLSearchParams({arquivo: nome, senha: 'luxbingo2025'}),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-      }).catch(()=>{});
-    });
-  }
-  delete salas[codigo];
-  salvarSalas();
-  res.json({ ok: true });
-});
-
 io.on('connection', (socket) => {
   console.log(`[+] ${socket.id}`);
 
