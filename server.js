@@ -1937,13 +1937,10 @@ cartelasExistentes: cartelasExistentes,
     cb({ ok: true });
   });
 
-  socket.on('sortear', ({ codigo }, cb) => {
+ socket.on('sortear', ({ codigo }, cb) => {
     const s = salas[codigo];
     if (!s) return cb({ ok: false, erro: 'Sala não encontrada' });
     s.ultimaAtividade = Date.now();
-    if (s.adm.socketId !== socket.id) s.adm.socketId = socket.id;
-    const s = salas[codigo];
-    if (!s) return cb({ ok: false, erro: 'Sala não encontrada' });
     if (s.adm.socketId !== socket.id) s.adm.socketId = socket.id;
     if (s.vencedor) return cb({ ok: false, erro: 'Jogo já encerrado' });
     if (!s.ativa) s.ativa = true;
