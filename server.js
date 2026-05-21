@@ -1925,7 +1925,7 @@ cartelasExistentes: cartelasExistentes,
   socket.on('rejeitar_cartela', ({ codigo, idUnico, motivo }, cb) => {
     const s = salas[codigo];
     if (!s || s.adm.socketId !== socket.id) return cb({ ok: false, erro: 'Não autorizado' });
-    s.ultimaAtividade = Date.now();
+    if (s) s.ultimaAtividade = Date.now();
     const sol = s.solicitacoes[idUnico];
     if (!sol) return cb({ ok: false, erro: 'Solicitação não encontrada' });
     s.solicitacoes[idUnico].status = 'rejeitado';
