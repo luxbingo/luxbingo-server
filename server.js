@@ -1968,7 +1968,7 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
         for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
           const v = cartela.grid[r][c];
           if (v === 'FREE') { marc++; tot++; }
-          else { tot++; if (s.sorteados.includes(v)) marc++; }
+          else { tot++; if (s.sorteados.includes(Number(v))) marc++; }
         }
         if (marc === tot) melhorBingo = true;
         else if (marc === tot - 1) melhorQuase = true;
