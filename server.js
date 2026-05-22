@@ -147,8 +147,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--text);
     <div class="ct">📝 Seus Dados</div>
     <label class="lbl">Nome completo *</label>
     <input class="inp" id="iNome" type="text" placeholder="Seu nome...">
-    <label class="lbl">CPF *</label>
-    <input class="inp" id="iCpf" type="tel" placeholder="000.000.000-00" maxlength="14">
+    <label class="lbl">Email (opcional)</label>
+<input class="inp" id="iEmail" type="email" placeholder="seu@email.com">
     <label class="lbl">Celular *</label>
     <input class="inp" id="iCel" type="tel" placeholder="(00) 00000-0000" maxlength="15">
     <label class="lbl">Sua Chave Pix *</label>
@@ -299,12 +299,12 @@ document.getElementById('btnRecuperar').onclick=function(){
     .catch(function(){toast('❌ Erro de conexão!',true);});
 };
 document.getElementById('btnConectar').onclick=function(){
-  var nome=document.getElementById('iNome').value.trim();
-  var cpf=document.getElementById('iCpf').value.trim();
+var nome=document.getElementById('iNome').value.trim();
+  var cpf='';
   var cel=document.getElementById('iCel').value.trim();
   var pix=document.getElementById('iPix').value.trim();
-  var email=document.getElementById('iEmail').value.trim();
-  if(!nome||!cpf||!cel||!pix){toast('❌ Preencha todos os campos!',true);return;}
+  var email='';
+  if(!nome||!cel||!pix){toast('❌ Preencha todos os campos!',true);return;}
   if(!meuIdUnico){
     meuIdUnico=gerarIdUnico();
     localStorage.setItem('luxbingo_id_'+COD,meuIdUnico);
@@ -1158,10 +1158,10 @@ async function salvarSalas() {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return;
   try {
   const salasReduzidas = {};
-    const seteDias = 7 * 24 * 60 * 60 * 1000;
+    const umDia = 24 * 60 * 60 * 1000;
     for (const [cod, s] of Object.entries(salas)) {
       if (!s) continue;
-      if (s.criadoEm && Date.now() - s.criadoEm > seteDias) continue;
+      if (s.criadoEm && Date.now() - s.criadoEm > umDia) continue;
       salasReduzidas[cod] = {
         ...s,
         cartelas: [],
