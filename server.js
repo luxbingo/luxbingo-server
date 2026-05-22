@@ -147,14 +147,14 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--text);
     <div class="ct">📝 Seus Dados</div>
     <label class="lbl">Nome completo *</label>
     <input class="inp" id="iNome" type="text" placeholder="Seu nome...">
-    <label class="lbl">Email (opcional)</label>
+    
 
     <label class="lbl">Celular *</label>
     <input class="inp" id="iCel" type="tel" placeholder="(00) 00000-0000" maxlength="15">
     <label class="lbl">Sua Chave Pix *</label>
     <input class="inp" id="iPix" type="text" placeholder="CPF, email ou celular...">
     
-    <input class="inp" id="iEmail" type="email" placeholder="seu@email.com">
+    
     <label class="lbl">Quantidade de cartelas</label>
     <div style="display:flex;gap:6px;margin-bottom:10px">
       <button class="qt-btn ok" data-q="1">1</button>
