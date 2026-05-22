@@ -680,7 +680,8 @@ document.getElementById('nAtual').textContent=d.numero;
 sock.on('bingo_confirmado',function(d){
     var b=document.createElement('div');b.className='bingo-banner';
     var lista=d.vencedores||[d.vencedor];
-    b.innerHTML='<span class="bb-icon">🎊</span><div class="bb-title">BINGO!</div><div class="bb-sub">Vencedor'+(lista.length>1?'es: ':': ')+lista.map(function(v){return v.nome;}).join(', ')+'</div>';
+    var pixHtml=d.chavePix?'<div style="font-size:11px;color:rgba(13,27,46,.8);margin-top:6px">🔑 Pix do organizador:<br><b>'+d.chavePix+'</b></div>':'';
+    b.innerHTML='<span class="bb-icon">🎊</span><div class="bb-title">BINGO!</div><div class="bb-sub">Vencedor'+(lista.length>1?'es: ':': ')+lista.map(function(v){return v.nome;}).join(', ')+'</div>'+pixHtml;
     document.getElementById('bingoBox').innerHTML='';document.getElementById('bingoBox').appendChild(b);
   });
 sock.on('alerta_jogador',function(d){
@@ -1992,7 +1993,7 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
       s.ativa = false;
       salvarSalas();
      io.to(s.adm.socketId).emit('parar_sorteio');
-io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, sorteados: s.sorteados });
+io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, sorteados: s.sorteados, chavePix: s.chavePix });
     }
     cb({ ok: true, ...res });
   });
