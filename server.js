@@ -303,7 +303,8 @@ var nome=document.getElementById('iNome').value.trim();
   var cpf='';
   var cel=document.getElementById('iCel').value.trim();
   var pix=document.getElementById('iPix').value.trim();
- var cpf=document.getElementById('iCpf').value.trim();
+var cpf=document.getElementById('iCpf').value.trim();
+var email='';
 if(!nome||!cpf||!cel||!pix){toast('❌ Preencha todos os campos!',true);return;}
   if(!meuIdUnico){
     meuIdUnico=gerarIdUnico();
