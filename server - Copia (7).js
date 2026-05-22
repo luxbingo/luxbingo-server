@@ -1158,10 +1158,10 @@ async function salvarSalas() {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return;
   try {
   const salasReduzidas = {};
-    const seteDias = 7 * 24 * 60 * 60 * 1000;
+    const umDia = 24 * 60 * 60 * 1000;
     for (const [cod, s] of Object.entries(salas)) {
       if (!s) continue;
-      if (s.criadoEm && Date.now() - s.criadoEm > seteDias) continue;
+      if (s.criadoEm && Date.now() - s.criadoEm > umDia) continue;
       salasReduzidas[cod] = {
         ...s,
         cartelas: [],
