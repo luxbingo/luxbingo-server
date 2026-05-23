@@ -29,7 +29,7 @@ app.get('/sala-adm/:admId', (req, res) => {
   });
 });
 
-const LOGO = 'https://luxbingo-server-production.up.railway.app/logo.png?v=2';
+const LOGO = 'https://luxbingo-server-production.up.railway.app/logo.png';
 
 app.get('/jogo/:codigo', (req, res) => {
   const codigo = req.params.codigo.toUpperCase();
@@ -153,8 +153,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--text);
     <input class="inp" id="iCel" type="tel" placeholder="(00) 00000-0000" maxlength="15">
     <label class="lbl">Sua Chave Pix *</label>
     <input class="inp" id="iPix" type="text" placeholder="CPF, email ou celular...">
-    
-    
+    <label class="lbl">Email (opcional)</label>
+    <input class="inp" id="iEmail" type="email" placeholder="seu@email.com">
     <label class="lbl">Quantidade de cartelas</label>
     <div style="display:flex;gap:6px;margin-bottom:10px">
       <button class="qt-btn ok" data-q="1">1</button>
@@ -299,13 +299,12 @@ document.getElementById('btnRecuperar').onclick=function(){
     .catch(function(){toast('❌ Erro de conexão!',true);});
 };
 document.getElementById('btnConectar').onclick=function(){
-var nome=document.getElementById('iNome').value.trim();
-  var cpf='';
+  var nome=document.getElementById('iNome').value.trim();
+  var cpf=document.getElementById('iCpf').value.trim();
   var cel=document.getElementById('iCel').value.trim();
   var pix=document.getElementById('iPix').value.trim();
-var cpf=document.getElementById('iCpf').value.trim();
-var email='';
-if(!nome||!cpf||!cel||!pix){toast('❌ Preencha todos os campos!',true);return;}
+  var email=document.getElementById('iEmail').value.trim();
+  if(!nome||!cpf||!cel||!pix){toast('❌ Preencha todos os campos!',true);return;}
   if(!meuIdUnico){
     meuIdUnico=gerarIdUnico();
     localStorage.setItem('luxbingo_id_'+COD,meuIdUnico);
@@ -681,8 +680,7 @@ document.getElementById('nAtual').textContent=d.numero;
 sock.on('bingo_confirmado',function(d){
     var b=document.createElement('div');b.className='bingo-banner';
     var lista=d.vencedores||[d.vencedor];
-    var pixHtml=d.chavePix?'<div style="font-size:11px;color:rgba(13,27,46,.8);margin-top:6px">🔑 Pix do organizador:<br><b>'+d.chavePix+'</b></div>':'';
-    b.innerHTML='<span class="bb-icon">🎊</span><div class="bb-title">BINGO!</div><div class="bb-sub">Vencedor'+(lista.length>1?'es: ':': ')+lista.map(function(v){return v.nome;}).join(', ')+'</div>'+pixHtml;
+    b.innerHTML='<span class="bb-icon">🎊</span><div class="bb-title">BINGO!</div><div class="bb-sub">Vencedor'+(lista.length>1?'es: ':': ')+lista.map(function(v){return v.nome;}).join(', ')+'</div>';
     document.getElementById('bingoBox').innerHTML='';document.getElementById('bingoBox').appendChild(b);
   });
 sock.on('alerta_jogador',function(d){
@@ -1160,10 +1158,10 @@ async function salvarSalas() {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return;
   try {
   const salasReduzidas = {};
-  const seteDias = 7 * 24 * 60 * 60 * 1000;
-for (const [cod, s] of Object.entries(salas)) {
-  if (!s) continue;
-  if (s.criadoEm && Date.now() - s.criadoEm > seteDias) continue;
+    const umDia = 24 * 60 * 60 * 1000;
+    for (const [cod, s] of Object.entries(salas)) {
+      if (!s) continue;
+      if (s.criadoEm && Date.now() - s.criadoEm > umDia) continue;
       salasReduzidas[cod] = {
         ...s,
         cartelas: [],
@@ -1994,7 +1992,7 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
       s.ativa = false;
       salvarSalas();
      io.to(s.adm.socketId).emit('parar_sorteio');
-io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, sorteados: s.sorteados, chavePix: s.chavePix });
+io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, sorteados: s.sorteados });
     }
     cb({ ok: true, ...res });
   });
