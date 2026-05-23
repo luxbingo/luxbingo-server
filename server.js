@@ -208,9 +208,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--navy);color:var(--text);
         <div class="num-atual" id="nAtual">--</div>
       </div>
      <div id="aguardandoBox" style="flex:1;text-align:center;padding:0 6px">
-  <div style="font-size:clamp(10px,3vw,13px);font-weight:900;color:#ffd966;text-transform:uppercase;letter-spacing:1px;text-shadow:0 0 10px rgba(255,217,102,0.6)">⏳ O SORTEIO SERÁ</div>
-  <div id="horarioJogBox" style="font-size:clamp(14px,4vw,20px);font-weight:900;color:#ffd966;margin-top:2px;text-shadow:0 0 8px rgba(255,217,102,0.5)"></div>
-</div>
+        <div style="font-size:clamp(10px,3vw,14px);font-weight:900;color:#ffd966;text-transform:uppercase;letter-spacing:1px;text-shadow:0 0 10px rgba(255,217,102,0.6)">⏳ Aguardando Sorteio</div>
+        <div id="horarioJogBox" style="font-size:clamp(10px,2.5vw,12px);font-weight:700;color:#c9a227;margin-top:2px"></div>
+      </div>
       <div id="premioJogBox" style="display:none;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:10px;padding:6px 12px;text-align:center;margin-left:auto">
         <div style="font-size:8px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px">🏆 Prêmio</div>
         <div style="font-size:18px;font-weight:900;color:var(--navy)" id="premioJogVal">--</div>
@@ -679,8 +679,7 @@ document.getElementById('nAtual').textContent=d.numero;
   });
 sock.on('bingo_confirmado',function(d){
     var b=document.createElement('div');b.className='bingo-banner';
-    var lista=d.vencedores||[d.vencedor];
-    b.innerHTML='<span class="bb-icon">🎊</span><div class="bb-title">BINGO!</div><div class="bb-sub">Vencedor'+(lista.length>1?'es: ':': ')+lista.map(function(v){return v.nome;}).join(', ')+'</div>';
+    b.innerHTML='<span class="bb-icon">🎊</span><div class="bb-title">BINGO!</div><div class="bb-sub">Vencedor: '+d.vencedor.nome+'</div>';
     document.getElementById('bingoBox').innerHTML='';document.getElementById('bingoBox').appendChild(b);
   });
 sock.on('alerta_jogador',function(d){
@@ -749,11 +748,7 @@ sock.on('alerta_jogador',function(d){
     }
     toast('🏆 Prêmio: ' + d.premio);
   });
-  sock.on('atualizar_midia',function(d){
-  if(slideTimer){clearInterval(slideTimer);slideTimer=null;}
-  if(d.youtubeLink){setYoutube(d.youtubeLink,d.slideIntervalo);}
-});
-sock.on('cartelas_limpas',function(){
+  sock.on('cartelas_limpas',function(){
     try{
       var n=localStorage.getItem('luxbingo_nome_'+COD)||'Jogador';
       var chave='luxbingo_'+COD+'_'+n.replace(/\s/g,'_');
@@ -790,11 +785,7 @@ function conectarJogo(nome){
     sock.emit('entrar_sala',{codigo:COD,idUnico:meuIdUnico,nomeJogador:nome},function(r){
       if(r&&r.ok){
         nums=r.sorteados||nums;
-        if(r.youtubeLink){setYoutube(r.youtubeLink,r.slideIntervalo);mostrarYoutube();}
-if(r.horario){
-  var hb=document.getElementById('horarioJogBox');
-  if(hb)hb.textContent='🕐 '+r.horario;
-}
+        if(r.youtubeLink){setYoutube(r.youtubeLink);mostrarYoutube();}
         if(r.cartelasExistentes&&r.cartelasExistentes.length>0){
           cartelas=r.cartelasExistentes;
           nums=r.sorteados||[];
@@ -823,11 +814,7 @@ sock.on('connect', function(){
     sock.emit('entrar_sala',{codigo:COD,idUnico:meuIdUnico,nomeJogador:nome},function(r){
       if(r&&r.ok){
         nums=r.sorteados||[];
-        if(r.youtubeLink){setYoutube(r.youtubeLink,r.slideIntervalo);mostrarYoutube();}
-if(r.horario){
-  var hb=document.getElementById('horarioJogBox');
-  if(hb)hb.textContent='🕐 '+r.horario;
-}
+        if(r.youtubeLink){setYoutube(r.youtubeLink);mostrarYoutube();}
         cartelas.forEach(function(c){
           if(!marc[c.id])marc[c.id]=[];
           nums.forEach(function(n){
@@ -1949,8 +1936,8 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
       s.vencedor = vencedores[0];
       s.ativa = false;
       salvarSalas();
-     io.to(s.adm.socketId).emit('parar_sorteio');
-io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, sorteados: s.sorteados });
+      io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, sorteados: s.sorteados });
+      io.to(s.adm.socketId).emit('parar_sorteio');
     }
     cb({ ok: true, ...res });
   });
@@ -1993,18 +1980,6 @@ io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, so
   socket.on('deletar_sala', ({ codigo }, cb) => {
     const s = salas[codigo];
     if (!s) return cb && cb({ ok: false });
-    // Apaga mídias do servidor
-    if (s.youtubeLink) {
-      var links = s.youtubeLink.split(',').map(l => l.trim()).filter(l => l.startsWith('https://geribingo.com/uploads/'));
-      links.forEach(function(url) {
-        var nome = url.split('/').pop();
-        fetch('https://geribingo.com/delete.php', {
-          method: 'POST',
-          body: new URLSearchParams({arquivo: nome, senha: 'luxbingo2025'}),
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-        }).catch(()=>{});
-      });
-    }
     delete salas[codigo];
     if (UPSTASH_URL && UPSTASH_TOKEN) {
       fetch(`${UPSTASH_URL}/del/luxbingo_vendidas_${codigo}`, {
@@ -2052,12 +2027,8 @@ io.to(codigo).emit('bingo_confirmado', { vencedor: { ...s.vencedor, chavePix }, 
     if (mpToken !== undefined) s.mpToken = mpToken;
     if (porc !== undefined) s.porc = parseFloat(porc) || 20;
 if (slideIntervalo !== undefined) s.slideIntervalo = slideIntervalo;
-salvarSalas();
-io.to(codigo).emit('atualizar_midia', {
-  youtubeLink: s.youtubeLink,
-  slideIntervalo: s.slideIntervalo || 3
-});
-cb && cb({ ok: true });
+    salvarSalas();
+    cb && cb({ ok: true });
   });
 
   socket.on('anunciar_premio', ({ codigo, premio }, cb) => {
