@@ -1578,46 +1578,6 @@ app.get('/teste-bingo/:codigo', (req, res) => {
   });
 });
 
-app.post('/deletar-sala-http/:codigo', (req, res) => {
-  const codigo = req.params.codigo?.toUpperCase();
-  const s = salas[codigo];
-  if (!s) return res.json({ ok: false });
-  if (s.youtubeLink) {
-    s.youtubeLink.split(',').map(l => l.trim()).filter(l => l.startsWith('https://geribingo.com/uploads/')).forEach(url => {
-      const nome = url.split('/').pop();
-      fetch('https://geribingo.com/delete.php', {
-        method: 'POST',
-        body: new URLSearchParams({arquivo: nome, senha: 'luxbingo2025'}),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-      }).catch(()=>{});
-    });
-  }
-  delete salas[codigo];
-  salvarSalas();
-  res.json({ ok: true });
-});
-
-setInterval(function() {
-  const seteDias = 7 * 24 * 60 * 60 * 1000;
-  const agora = Date.now();
-  let removidas = 0;
-  for (const [cod, s] of Object.entries(salas)) {
-    if (!s) { delete salas[cod]; continue; }
-    const ultimaAtividade = s.ultimaAtividade || s.criadoEm || 0;
-    if (agora - ultimaAtividade > seteDias) {
-      if (s.youtubeLink) {
-        s.youtubeLink.split(',').map(l => l.trim()).filter(l => l.startsWith('https://geribingo.com/uploads/')).forEach(url => {
-          const nome = url.split('/').pop();
-          fetch('https://geribingo.com/delete.php', {method:'POST',body:new URLSearchParams({arquivo:nome,senha:'luxbingo2025'}),headers:{'Content-Type':'application/x-www-form-urlencoded'}}).catch(()=>{});
-        });
-      }
-      delete salas[cod];
-      removidas++;
-    }
-  }
-  if (removidas > 0) { console.log(`[LIMPEZA] ${removidas} sala(s) removida(s)`); salvarSalas(); }
-}, 60 * 60 * 1000);
-
 io.on('connection', (socket) => {
   console.log(`[+] ${socket.id}`);
 
@@ -1768,7 +1728,7 @@ slideIntervalo: slideIntervalo || 3,
     const s = salas[codigo?.toUpperCase()];
     if (!s) return cb({ ok: false, erro: 'Sala não encontrada' });
     if (s.vencedor) return cb({ ok: false, erro: 'Jogo já encerrado' });
-    s.ultimaAtividade = Date.now();
+    
     const socketId = socket.id;
     
     if (s.jogadoresPorIdUnico[idUnico]) {
@@ -1925,7 +1885,6 @@ cartelasExistentes: cartelasExistentes,
   socket.on('rejeitar_cartela', ({ codigo, idUnico, motivo }, cb) => {
     const s = salas[codigo];
     if (!s || s.adm.socketId !== socket.id) return cb({ ok: false, erro: 'Não autorizado' });
-    if (s) s.ultimaAtividade = Date.now();
     const sol = s.solicitacoes[idUnico];
     if (!sol) return cb({ ok: false, erro: 'Solicitação não encontrada' });
     s.solicitacoes[idUnico].status = 'rejeitado';
@@ -1937,10 +1896,9 @@ cartelasExistentes: cartelasExistentes,
     cb({ ok: true });
   });
 
- socket.on('sortear', ({ codigo }, cb) => {
+  socket.on('sortear', ({ codigo }, cb) => {
     const s = salas[codigo];
     if (!s) return cb({ ok: false, erro: 'Sala não encontrada' });
-    s.ultimaAtividade = Date.now();
     if (s.adm.socketId !== socket.id) s.adm.socketId = socket.id;
     if (s.vencedor) return cb({ ok: false, erro: 'Jogo já encerrado' });
     if (!s.ativa) s.ativa = true;
@@ -1968,7 +1926,7 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
         for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
           const v = cartela.grid[r][c];
           if (v === 'FREE') { marc++; tot++; }
-          else { tot++; if (s.sorteados.includes(Number(v))) marc++; }
+          else { tot++; if (s.sorteados.includes(v)) marc++; }
         }
         if (marc === tot) melhorBingo = true;
         else if (marc === tot - 1) melhorQuase = true;
