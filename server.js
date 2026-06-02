@@ -636,10 +636,25 @@ function registrarEventos(nome){
   sock.off('adm_desconectado');
   sock.off('sorteio_zerado');
   sock.off('cartelas_limpas');
-  sock.on('connect',function(){
-    if(cartelas.length>0){
-      sock.emit('entrar_sala',{codigo:COD,idUnico:meuIdUnico,nomeJogador:localStorage.getItem('luxbingo_nome_'+COD)||nome},function(){});
-    }
+sock.on('connect',function(){
+    sock.emit('entrar_sala',{codigo:COD,idUnico:meuIdUnico,nomeJogador:localStorage.getItem('luxbingo_nome_'+COD)||nome},function(r){
+      if(r&&r.ok&&r.cartelasExistentes&&r.cartelasExistentes.length>0&&cartelas.length===0){
+        cartelas=r.cartelasExistentes;
+        nums=r.sorteados||[];
+        marc={};
+        cartelas.forEach(function(c){
+          marc[c.id]=[];
+          nums.forEach(function(n){
+            for(var row=0;row<5;row++)for(var col=0;col<5;col++){
+              if(c.grid[row][col]===n&&marc[c.id].indexOf(n)===-1)marc[c.id].push(n);
+            }
+          });
+          if(marc[c.id].indexOf('FREE')===-1)marc[c.id].push('FREE');
+        });
+        tela(3);renderCartelas();renderGrid();
+        toast('✅ Cartela carregada!');
+      }
+    });
   });
   sock.on('cartela_aprovada',function(d){
     var novas=d.cartelas||[d.cartela];
