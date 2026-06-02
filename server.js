@@ -1729,7 +1729,8 @@ io.on('connection', (socket) => {
     let codigo;
     do { codigo = gerarCodigo(); } while (salas[codigo]);
     
-    const cartelas = gerarBolao(codigo, quantidadeCartelas || 100);
+    const qtdCartelas = Math.min(parseInt(quantidadeCartelas) || 500, 500);
+    const cartelas = gerarBolao(codigo, qtdCartelas);
     
 salas[codigo] = {
       codigo,
@@ -1848,11 +1849,17 @@ cartelasExistentes: cartelasExistentes,
   socket.on('solicitar_cartela', ({ codigo, idUnico, qtd, dados }, cb) => {
     const s = salas[codigo];
     if (!s) return cb({ ok: false, erro: 'Sala não encontrada' });
-    
     const cj = s.cartelasVendidasPorIdUnico[idUnico] || [];
     if (cj.length >= 5) return cb({ ok: false, erro: 'Máximo de 5 cartelas!' });
-    
-   const sol = s.solicitacoes[idUnico];
+
+    // Verifica se ainda tem cartelas disponíveis
+    const totalVendidas = Object.values(s.cartelasVendidasPorIdUnico).flat().length;
+    const qtdSolicitada = qtd || dados?.qtd || 1;
+    if (totalVendidas + qtdSolicitada > s.cartelas.length) {
+      return cb({ ok: false, erro: '🎰 Esgotado! Não há mais cartelas disponíveis nesta sala.' });
+    }
+
+    const sol = s.solicitacoes[idUnico];
     const cjAtual = s.cartelasVendidasPorIdUnico[idUnico] || [];
     if (cjAtual.length > 0) return cb({ ok: false, erro: 'Sua cartela já foi liberada! Recarregue a página.' });
     if (sol && sol.status === 'pendente' && s.mpToken) return cb({ ok: false, erro: 'Pagamento em processamento. Aguarde ou recarregue a página.' });
