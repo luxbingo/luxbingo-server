@@ -305,6 +305,8 @@ document.getElementById('btnConectar').onclick=function(){
   var pix=document.getElementById('iPix').value.trim();
   var email=document.getElementById('iEmail').value.trim();
   if(!nome||!cpf||!cel||!pix){toast('❌ Preencha todos os campos!',true);return;}
+  var cpfSoNum=cpf.replace(/\D/g,'');
+  if(cpfSoNum.length<11){toast('❌ CPF inválido! Digite os 11 dígitos.',true);return;}
   if(!meuIdUnico){
     meuIdUnico=gerarIdUnico();
     localStorage.setItem('luxbingo_id_'+COD,meuIdUnico);
