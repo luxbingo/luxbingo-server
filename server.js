@@ -362,7 +362,7 @@ sock.emit('solicitar_cartela',{codigo:COD,idUnico:meuIdUnico,qtd:qtdCartelas,dad
     body:JSON.stringify({idUnico:meuIdUnico,nome:nome,cpf:cpf,email:email,qtd:qtdCartelas})
   }).then(function(r){return r.json();}).then(function(d){
     document.getElementById('pixCarregando').style.display='none';
-    if(d.ok&&d.qrCode){
+  if(d.ok&&d.qrCode){
       pixCopiaCola=d.qrCode;
       document.getElementById('pValor').textContent='R$ '+d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2});
       if(d.qrCodeBase64){
@@ -372,7 +372,10 @@ sock.emit('solicitar_cartela',{codigo:COD,idUnico:meuIdUnico,qtd:qtdCartelas,dad
       document.getElementById('pixQrBox').style.display='block';
       iniciarTimerPix(d.expiracao||600);
     } else {
-      document.getElementById('pixCarregando').textContent='❌ '+(d.erro||'Erro ao gerar Pix. Use a chave manual.');
+      var errEl=document.getElementById('pixCarregando');
+      errEl.style.display='block';
+      errEl.style.color='#e74c3c';
+      errEl.textContent='❌ '+(d.erro||'Erro ao gerar Pix. Tente novamente.');
     }
   }).catch(function(){
     document.getElementById('pixCarregando').textContent='❌ Erro de conexão.';
