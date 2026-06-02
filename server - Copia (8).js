@@ -1290,13 +1290,15 @@ function gerarBolao(sala, qtd) {
 }
 
 function validarBingo(cartela, sorteados) {
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      const v = cartela.grid[r][c];
-      if (v !== 'FREE' && !sorteados.includes(v)) return false;
-    }
+  const g = cartela.grid;
+  const m = g.map(row => row.map(v => v === 'FREE' || sorteados.includes(v)));
+  for (let i = 0; i < 5; i++) {
+    if (m[i].every(Boolean)) return true;
+    if (m.every(row => row[i])) return true;
   }
-  return true;
+  if ([0, 1, 2, 3, 4].every(i => m[i][i])) return true;
+  if ([0, 1, 2, 3, 4].every(i => m[i][4 - i])) return true;
+  return false;
 }
 
 function sorteiarNumero(sala) {
@@ -1378,8 +1380,7 @@ app.post('/criar-pagamento/:codigo', async (req, res) => {
 
   const { idUnico, nome, cpf, email, qtd } = req.body;
   const cpfLimpo = (cpf||'').replace(/\D/g,'');
-  if (cpfLimpo.length < 11) return res.json({ ok: false, erro: 'CPF inválido. Digite os 11 dígitos.' });
-  const cpfFinal = cpfLimpo.slice(0, 11);
+  if (cpfLimpo.length !== 11) return res.json({ ok: false, erro: 'CPF inválido. Digite os 11 dígitos.' });
   const valor = s.valorCartela * (qtd || 1);
 
   try {
@@ -1398,7 +1399,7 @@ app.post('/criar-pagamento/:codigo', async (req, res) => {
           email: email || 'jogador@luxbingo.com',
           first_name: nome.split(' ')[0],
           last_name: nome.split(' ').slice(1).join(' ') || 'Jogador',
-          identification: { type: 'CPF', number: cpfFinal }
+          identification: { type: 'CPF', number: cpfLimpo }
         },
         notification_url: `https://luxbingo-server-production.up.railway.app/webhook-mp`,
         metadata: { codigo, idUnico, qtd: qtd||1 }
@@ -1796,6 +1797,7 @@ slideIntervalo: slideIntervalo || 3,
       delete s.pendingCartelas[idUnico];
       setTimeout(() => socket.emit('cartela_aprovada', payload), 500);
       console.log('[ENTRAR] entregando pendente para idUnico:',idUnico);
+      // Não retorna cartelasExistentes pois cartela_aprovada já vai entregar
       const totalCartelas = Object.values(s.cartelasVendidasPorIdUnico).reduce((t, c) => t + c.length, 0);
       const premioEstimado = totalCartelas * s.valorCartela;
       return cb({
@@ -1808,22 +1810,6 @@ slideIntervalo: slideIntervalo || 3,
         youtubeLink: s.youtubeLink,
         cartelasExistentes: [],
         premioEstimado: s.ativa ? premioEstimado : null
-      });
-    }
-    // Jogador conectou antes do webhook — re-verifica em 3s, 6s e 10s
-    const solAtual = s.solicitacoes[idUnico];
-    if (solAtual && solAtual.status === 'pendente' && s.mpToken) {
-      [3000, 6000, 10000].forEach(delay => {
-        setTimeout(() => {
-          if (!s.pendingCartelas || !s.pendingCartelas[idUnico]) return;
-          const payload = s.pendingCartelas[idUnico];
-          delete s.pendingCartelas[idUnico];
-          const jogAtual = s.jogadoresPorIdUnico[idUnico];
-          if (jogAtual && jogAtual.socketId && io.sockets.sockets.has(jogAtual.socketId)) {
-            io.to(jogAtual.socketId).emit('cartela_aprovada', payload);
-            console.log('[RE-ENTREGA] cartela entregue após delay para', idUnico);
-          }
-        }, delay);
       });
     }
     
@@ -1978,16 +1964,14 @@ Object.entries(s.cartelasVendidasPorIdUnico).forEach(([idUnico, carts]) => {
       let melhorBingo = false;
 
       carts.forEach(cartela => {
-        if (validarBingo(cartela, s.sorteados)) {
-          melhorBingo = true;
-        } else {
-          let faltando = 0;
-          for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
-            const v = cartela.grid[r][c];
-            if (v !== 'FREE' && !s.sorteados.includes(v)) faltando++;
-          }
-          if (faltando === 1) melhorQuase = true;
+        let marc = 0, tot = 0;
+        for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+          const v = cartela.grid[r][c];
+          if (v === 'FREE') { marc++; tot++; }
+          else { tot++; if (s.sorteados.includes(Number(v))) marc++; }
         }
+        if (marc === tot) melhorBingo = true;
+        else if (marc === tot - 1) melhorQuase = true;
       });
 
       if (melhorBingo && !s.vencedor) {
