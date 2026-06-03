@@ -1111,10 +1111,6 @@ window.onload=function(){
   fetch(SERVER+'/sala/'+COD)
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.disponiveis!==undefined){
-        var infoBox=document.getElementById('info-cod');
-        if(infoBox)infoBox.innerHTML='SALA: ${codigo}<br><span style="color:var(--gold2);font-weight:700">🎟️ '+d.disponiveis+' de '+d.totalCartelas+' cartelas disponíveis</span>';
-      }
       if(!d.ok){
         var t1=document.getElementById('t1');
         if(t1)t1.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;text-align:center">'
