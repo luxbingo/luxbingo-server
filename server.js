@@ -1445,14 +1445,13 @@ app.post('/webhook-mp', async (req, res) => {
   res.sendStatus(200);
   console.log('[WEBHOOK] recebido:', JSON.stringify(req.body));
   
-  const { type, action, data } = req.body;
-  const tipoEvento = type || (action && action.startsWith('payment') ? 'payment' : null);
+ const { type, action, data, topic, resource } = req.body;
+  const tipoEvento = type || (action && action.startsWith('payment') ? 'payment' : null) || (topic === 'payment' ? 'payment' : null);
   if (tipoEvento !== 'payment') {
     console.log('[WEBHOOK] tipo ignorado:', tipoEvento);
     return;
   }
-  
-  const paymentId = data?.id;
+  const paymentId = data?.id || resource;
   if (!paymentId) {
     console.log('[WEBHOOK] sem paymentId');
     return;
