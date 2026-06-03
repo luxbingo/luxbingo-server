@@ -1483,8 +1483,11 @@ app.post('/webhook-mp', async (req, res) => {
       const qtd = meta.qtd || meta.qtd || 1;
       if (!codPag || codPag !== codigo) continue;
 
-      const sol = sala.solicitacoes[idUnico];
-      if (!sol || sol.status === 'aprovado') continue;
+     const sol = sala.solicitacoes[idUnico];
+      if (!sol || sol.status === 'aprovado') {
+        console.log('[WEBHOOK] ignorado - já processado para', idUnico);
+        break;
+      }
 
       // Libera cartelas
       const vendidas = Object.values(sala.cartelasVendidasPorIdUnico).flat().map(c => c.id);
