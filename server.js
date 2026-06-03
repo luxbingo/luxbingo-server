@@ -1371,7 +1371,9 @@ app.get('/minhas-salas', (req, res) => {
 app.get('/sala/:codigo', (req, res) => {
   const s = salas[req.params.codigo?.toUpperCase()];
   if (!s) return res.json({ ok: false, erro: 'Sala não encontrada' });
-  res.json({ ok: true, valorCartela: s.valorCartela, horario: s.horario, ativa: s.ativa });
+  const totalVendidas = Object.values(s.cartelasVendidasPorIdUnico).flat().length;
+  const disponiveis = s.cartelas.length - totalVendidas;
+  res.json({ ok: true, valorCartela: s.valorCartela, horario: s.horario, ativa: s.ativa, totalCartelas: s.cartelas.length, disponiveis });
 });
 app.get('/cartela/:codigo/:cartelaId', (req, res) => {
   const cartelaId = req.params.cartelaId.toUpperCase();
