@@ -2098,8 +2098,26 @@ io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, so
         }).catch(()=>{});
       });
     }
-    delete salas[codigo];
-    if (UPSTASH_URL && UPSTASH_TOKEN) {
+    // Avisa jogadores antes de deletar
+    io.to(codigo).emit('cartelas_limpas');
+    // Pequena espera para garantir entrega
+    setTimeout(() => {
+      delete salas[codigo];
+      if (UPSTASH_URL && UPSTASH_TOKEN) {
+        fetch(`${UPSTASH_URL}/del/luxbingo_vendidas_${codigo}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` }
+        }).catch(()=>{});
+        fetch(`${UPSTASH_URL}/del/luxbingo_salas`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` }
+        }).then(()=> salvarSalas()).catch(()=> salvarSalas());
+      } else {
+        salvarSalas();
+      }
+      cb && cb({ ok: true });
+    }, 1000);
+    return;
       fetch(`${UPSTASH_URL}/del/luxbingo_vendidas_${codigo}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` }
