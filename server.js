@@ -2118,20 +2118,7 @@ io.to(codigo).emit('bingo_confirmado', { vencedor: vencedores[0], vencedores, so
       cb && cb({ ok: true });
     }, 1000);
     return;
-      fetch(`${UPSTASH_URL}/del/luxbingo_vendidas_${codigo}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` }
-      }).catch(()=>{});
-      fetch(`${UPSTASH_URL}/del/luxbingo_salas`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` }
-      }).then(()=> salvarSalas()).catch(()=> salvarSalas());
-    } else {
-      salvarSalas();
-    }
-    cb && cb({ ok: true });
   });
-
   socket.on('gritar_bingo', ({ codigo, cartelaId }, cb) => {
     const s = salas[codigo];
     if (!s || !s.ativa || s.vencedor) return cb({ ok: false });
