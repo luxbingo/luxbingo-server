@@ -1111,6 +1111,10 @@ window.onload=function(){
   fetch(SERVER+'/sala/'+COD)
     .then(function(r){return r.json();})
     .then(function(d){
+      if(d.disponiveis!==undefined){
+        var infoBox=document.getElementById('info-cod');
+        if(infoBox)infoBox.innerHTML='SALA: ${codigo}<br><span style="color:var(--gold2);font-weight:700">🎟️ '+d.disponiveis+' de '+d.totalCartelas+' cartelas disponíveis</span>';
+      }
       if(!d.ok){
         var t1=document.getElementById('t1');
         if(t1)t1.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;text-align:center">'
@@ -1371,7 +1375,9 @@ app.get('/minhas-salas', (req, res) => {
 app.get('/sala/:codigo', (req, res) => {
   const s = salas[req.params.codigo?.toUpperCase()];
   if (!s) return res.json({ ok: false, erro: 'Sala não encontrada' });
-  res.json({ ok: true, valorCartela: s.valorCartela, horario: s.horario, ativa: s.ativa });
+  const totalVendidas = Object.values(s.cartelasVendidasPorIdUnico).flat().length;
+  const disponiveis = s.cartelas.length - totalVendidas;
+  res.json({ ok: true, valorCartela: s.valorCartela, horario: s.horario, ativa: s.ativa, totalCartelas: s.cartelas.length, disponiveis });
 });
 app.get('/cartela/:codigo/:cartelaId', (req, res) => {
   const cartelaId = req.params.cartelaId.toUpperCase();
