@@ -50,6 +50,9 @@
 
   .footer{margin-top:24px;text-align:center;font-size:11px;color:rgba(232,213,163,.25);letter-spacing:1px}
 
+  .btn-excluir{padding:5px 12px;background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.4);border-radius:6px;color:#e74c3c;font-size:11px;font-weight:700;cursor:pointer}
+  .btn-excluir:hover{background:rgba(231,76,60,.3)}
+
   @media(max-width:700px){.resumo{grid-template-columns:repeat(2,1fr)}.card-res .valor{font-size:20px}th,td{padding:8px 10px;font-size:11px}}
 </style>
 </head>
@@ -115,10 +118,11 @@
       <th>Minha parte</th>
       <th>Pix ADM</th>
       <th>Criado em</th>
+      <th>Ação</th>
     </tr>
   </thead>
   <tbody id="tbody">
-    <tr><td colspan="12" class="vazio"><span class="icon">🎰</span>Carregando...</td></tr>
+    <tr><td colspan="13" class="vazio"><span class="icon">🎰</span>Carregando...</td></tr>
   </tbody>
 </table>
 
@@ -130,6 +134,17 @@ var timer = 10;
 var intervalo;
 
 function fmt(v){ return 'R$ ' + parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function excluirSala(codigo){
+  if(!confirm('Excluir sala ' + codigo + '?\n\nEsta ação não pode ser desfeita.\nOs jogadores serão desconectados.')) return;
+  fetch(SERVER + '/deletar-sala-http/' + codigo, { method: 'POST' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.ok){ alert('✅ Sala ' + codigo + ' excluída com sucesso!'); carregar(); }
+      else { alert('❌ Erro ao excluir sala.'); }
+    })
+    .catch(function(){ alert('❌ Erro de conexão.'); });
+}
 
 function carregar(){
   timer = 10;
@@ -151,7 +166,7 @@ function carregar(){
 
       var tbody = document.getElementById('tbody');
       if(!salas.length){
-        tbody.innerHTML = '<tr><td colspan="12" class="vazio"><span class="icon">🎰</span>Nenhuma sala ativa no momento</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" class="vazio"><span class="icon">🎰</span>Nenhuma sala ativa no momento</td></tr>';
         return;
       }
 
@@ -172,6 +187,7 @@ function carregar(){
           + '<td class="minha-parte">' + fmt(s.minhaParte||0) + '</td>'
           + '<td style="font-size:11px;color:rgba(232,213,163,.6)">' + (s.chavePix||'—') + '</td>'
           + '<td style="font-size:11px;color:rgba(232,213,163,.5)">' + (s.criadoEm||'—') + '</td>'
+          + '<td><button class="btn-excluir" onclick="excluirSala(\'' + s.codigo + '\')">🗑️ Excluir</button></td>'
           + '</tr>';
       });
 
@@ -181,7 +197,7 @@ function carregar(){
         + '<td>' + fmt(salas.reduce(function(t,s){return t+parseFloat(s.totalArrecadado||0);},0)) + '</td>'
         + '<td style="color:#e74c3c">' + fmt(salas.reduce(function(t,s){return t+parseFloat(s.lucroAdm||0);},0)) + '</td>'
         + '<td class="minha-parte">' + fmt(d.totalMinhaParteGeral||0) + '</td>'
-        + '<td colspan="2"></td>'
+        + '<td colspan="3"></td>'
         + '</tr>';
 
       tbody.innerHTML = html;
