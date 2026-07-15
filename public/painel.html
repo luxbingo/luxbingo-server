@@ -125,7 +125,23 @@
     <tr><td colspan="13" class="vazio"><span class="icon">🎰</span>Carregando...</td></tr>
   </tbody>
 </table>
-
+<div class="secao-titulo" style="margin-top:32px">Assinatura do App (Adms)</div>
+<div class="card-res" style="max-width:480px">
+  <div style="margin-bottom:14px">
+    <div class="label" style="margin-bottom:6px">Sua chave Pix (recebe as assinaturas)</div>
+    <input id="cfgChavePix" type="text" placeholder="CPF, email ou celular" style="width:100%;padding:10px;background:rgba(255,255,255,.05);border:1px solid rgba(201,162,39,.3);border-radius:8px;color:#f0c040;font-size:13px;outline:none">
+  </div>
+  <div style="margin-bottom:14px">
+    <div class="label" style="margin-bottom:6px">Valor da assinatura (R$)</div>
+    <input id="cfgValor" type="number" step="0.01" placeholder="29.90" style="width:100%;padding:10px;background:rgba(255,255,255,.05);border:1px solid rgba(201,162,39,.3);border-radius:8px;color:#f0c040;font-size:13px;outline:none">
+  </div>
+  <div style="margin-bottom:14px">
+    <div class="label" style="margin-bottom:6px">Seu Access Token Mercado Pago</div>
+    <input id="cfgMpToken" type="text" placeholder="APP_USR-... ou TEST-..." style="width:100%;padding:10px;background:rgba(255,255,255,.05);border:1px solid rgba(201,162,39,.3);border-radius:8px;color:#f0c040;font-size:13px;outline:none">
+  </div>
+  <button class="btn-refresh" onclick="salvarConfigLicenca()">💾 Salvar Configuração</button>
+  <div id="cfgStatus" style="margin-top:10px;font-size:12px;color:rgba(232,213,163,.6)"></div>
+</div>
 <div class="footer">Lux Bingo · Painel do Dono · Atualização automática a cada 10s</div>
 
 <script>
@@ -217,7 +233,47 @@ function iniciarTimer(){
   }, 1000);
 }
 
+function carregarConfigLicenca(){
+  fetch(SERVER + '/admin/config-licenca')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d.ok) return;
+      document.getElementById('cfgChavePix').value = d.chavePix || '';
+      document.getElementById('cfgValor').value = d.valor || '';
+      document.getElementById('cfgMpToken').value = d.mpToken || '';
+    })
+    .catch(function(){});
+}
+
+function salvarConfigLicenca(){
+  var chavePix = document.getElementById('cfgChavePix').value.trim();
+  var valor = document.getElementById('cfgValor').value.trim();
+  var mpToken = document.getElementById('cfgMpToken').value.trim();
+  var status = document.getElementById('cfgStatus');
+  status.textContent = '⏳ Salvando...';
+  fetch(SERVER + '/admin/config-licenca', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chavePix: chavePix, valor: valor, mpToken: mpToken })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.ok){
+        status.textContent = '✅ Salvo com sucesso!';
+        status.style.color = '#2ecc71';
+      } else {
+        status.textContent = '❌ Erro ao salvar';
+        status.style.color = '#e74c3c';
+      }
+    })
+    .catch(function(){
+      status.textContent = '❌ Erro de conexão';
+      status.style.color = '#e74c3c';
+    });
+}
+
 carregar();
+carregarConfigLicenca();
 iniciarTimer();
 </script>
 </body>
