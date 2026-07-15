@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const path = require('path');
 
 const app = express();
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -1556,7 +1557,7 @@ app.get('/cartela/:codigo/:cartelaId', (req, res) => {
   res.json({ ok: false, erro: 'Cartela não encontrada' });
 });
 
-app.use(express.json());
+
 
 app.post('/criar-pagamento/:codigo', async (req, res) => {
   const { codigo } = req.params;
