@@ -1181,12 +1181,12 @@ const UPSTASH_URL = process.env.UPSTASH_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_TOKEN;
 // ===== SISTEMA DE LICENÇA / ASSINATURA DO ADM =====
 const licencas = {};
-const DIAS_TRIAL = 7;
-const DIAS_ASSINATURA = 30;
 let configLicenca = {
   chavePix: process.env.PIX_ASSINATURA_CHAVE || '',
   valor: parseFloat(process.env.VALOR_ASSINATURA || '29.90'),
-  mpToken: process.env.MP_TOKEN_ASSINATURA || ''
+  mpToken: process.env.MP_TOKEN_ASSINATURA || '',
+  trialMinutos: 10080,
+  assinaturaMinutos: 43200
 };
 
 async function salvarConfigLicenca() {
@@ -1243,17 +1243,17 @@ function statusLicenca(installId) {
     licencas[installId] = lic;
     salvarLicencas();
   }
-  const trialFim = lic.instalado + DIAS_TRIAL * 24 * 60 * 60 * 1000;
+  const trialFim = lic.instalado + configLicenca.trialMinutos * 60 * 1000;
   const emTrial = agora < trialFim;
   const assinaturaAtiva = !!(lic.pagoAte && agora < lic.pagoAte);
   const liberado = emTrial || assinaturaAtiva;
   return {
     liberado,
     emTrial,
-    diasTrialRestantes: emTrial ? Math.ceil((trialFim - agora) / (24*60*60*1000)) : 0,
+    minutosTrialRestantes: emTrial ? Math.ceil((trialFim - agora) / (60*1000)) : 0,
     assinaturaAtiva,
     pagoAte: lic.pagoAte,
-chavePixAssinatura: configLicenca.chavePix,
+    chavePixAssinatura: configLicenca.chavePix,
     valorAssinatura: configLicenca.valor
   };
 }
@@ -1441,6 +1441,12 @@ app.get('/admin/limpar-tudo', (req, res) => {
   salvarSalas();
   res.json({ ok: true, removidas: qtd });
 });
+
+app.get('/licenca/:installId', (req, res) => {
+  const status = statusLicenca(req.params.installId);
+  res.json({ ok: true, ...status });
+});
+
 app.post('/assinatura/pagar/:installId', async (req, res) => {
   const { installId } = req.params;
   if (!configLicenca.mpToken) return res.json({ ok: false, erro: 'Token de pagamento não configurado. Fale com o suporte.' });
@@ -1505,7 +1511,7 @@ app.post('/webhook-assinatura', async (req, res) => {
     const agora = Date.now();
     const lic = licencas[installId] || { instalado: agora, pagoAte: null };
     const baseParaContar = (lic.pagoAte && lic.pagoAte > agora) ? lic.pagoAte : agora;
-    lic.pagoAte = baseParaContar + DIAS_ASSINATURA * 24 * 60 * 60 * 1000;
+    lic.pagoAte = baseParaContar + configLicenca.assinaturaMinutos * 60 * 1000;
     licencas[installId] = lic;
     salvarLicencas();
     console.log('[ASSINATURA] Liberado até', new Date(lic.pagoAte).toLocaleString('pt-BR'), 'para', installId);
@@ -1518,10 +1524,12 @@ app.get('/admin/config-licenca', (req, res) => {
 });
 
 app.post('/admin/config-licenca', (req, res) => {
-  const { chavePix, valor, mpToken } = req.body;
+  const { chavePix, valor, mpToken, trialMinutos, assinaturaMinutos } = req.body;
   if (chavePix !== undefined) configLicenca.chavePix = chavePix;
   if (valor !== undefined) configLicenca.valor = parseFloat(valor) || 0;
   if (mpToken !== undefined) configLicenca.mpToken = mpToken;
+  if (trialMinutos !== undefined) configLicenca.trialMinutos = parseInt(trialMinutos) || 10080;
+  if (assinaturaMinutos !== undefined) configLicenca.assinaturaMinutos = parseInt(assinaturaMinutos) || 43200;
   salvarConfigLicenca();
   res.json({ ok: true, ...configLicenca });
 });
