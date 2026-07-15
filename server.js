@@ -1456,6 +1456,8 @@ app.post('/admin/config-licenca', (req, res) => {
   salvarConfigLicenca();
   res.json({ ok: true, ...configLicenca });
 });
+
+app.get('/minhas-salas', (req, res) => {
   const lista = Object.values(salas).map((s) => ({
     codigo: s.codigo,
     nome: s.nome || s.adm?.nome || '',
