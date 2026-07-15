@@ -1440,9 +1440,77 @@ app.get('/admin/limpar-tudo', (req, res) => {
   salvarSalas();
   res.json({ ok: true, removidas: qtd });
 });
-app.get('/licenca/:installId', (req, res) => {
-  const status = statusLicenca(req.params.installId);
-  res.json({ ok: true, ...status });
+app.post('/assinatura/pagar/:installId', async (req, res) => {
+  const { installId } = req.params;
+  if (!configLicenca.mpToken) return res.json({ ok: false, erro: 'Token de pagamento não configurado. Fale com o suporte.' });
+  const { nome, cpf, email } = req.body;
+  const cpfLimpo = (cpf||'').replace(/\D/g,'');
+  if (cpfLimpo.length < 11) return res.json({ ok: false, erro: 'CPF inválido. Digite os 11 dígitos.' });
+
+  try {
+    const r = await fetch('https://api.mercadopago.com/v1/payments', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${configLicenca.mpToken}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': `assinatura-${installId}-${Date.now()}`
+      },
+      body: JSON.stringify({
+        transaction_amount: configLicenca.valor,
+        description: `Lux Bingo - Assinatura mensal`,
+        payment_method_id: 'pix',
+        payer: {
+          email: email || 'adm@luxbingo.com',
+          first_name: (nome||'Adm').split(' ')[0],
+          last_name: (nome||'').split(' ').slice(1).join(' ') || 'Lux Bingo',
+          identification: { type: 'CPF', number: cpfLimpo.slice(0, 11) }
+        },
+        notification_url: `https://${DOMINIO}/webhook-assinatura`,
+        metadata: { installId }
+      })
+    });
+    const d = await r.json();
+    if (!d.id) return res.json({ ok: false, erro: d.message || 'Erro ao gerar Pix' });
+    res.json({
+      ok: true,
+      qrCode: d.point_of_interaction?.transaction_data?.qr_code,
+      qrCodeBase64: d.point_of_interaction?.transaction_data?.qr_code_base64,
+      valor: configLicenca.valor,
+      expiracao: 600
+    });
+  } catch(e) {
+    res.json({ ok: false, erro: e.message });
+  }
+});
+
+app.post('/webhook-assinatura', async (req, res) => {
+  res.sendStatus(200);
+  const { type, action, data, topic, resource } = req.body;
+  const tipoEvento = type || (action && action.startsWith('payment') ? 'payment' : null) || (topic === 'payment' ? 'payment' : null);
+  if (tipoEvento !== 'payment') return;
+  const paymentId = data?.id || resource;
+  if (!paymentId || !configLicenca.mpToken) return;
+
+  try {
+    const r = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+      headers: { 'Authorization': `Bearer ${configLicenca.mpToken}` }
+    });
+    const payment = await r.json();
+    if (payment.error || payment.status !== 'approved') return;
+
+    const installId = payment.metadata?.installId;
+    if (!installId) return;
+
+    const agora = Date.now();
+    const lic = licencas[installId] || { instalado: agora, pagoAte: null };
+    const baseParaContar = (lic.pagoAte && lic.pagoAte > agora) ? lic.pagoAte : agora;
+    lic.pagoAte = baseParaContar + DIAS_ASSINATURA * 24 * 60 * 60 * 1000;
+    licencas[installId] = lic;
+    salvarLicencas();
+    console.log('[ASSINATURA] Liberado até', new Date(lic.pagoAte).toLocaleString('pt-BR'), 'para', installId);
+  } catch(e) {
+    console.log('[WEBHOOK ASSINATURA ERROR]', e.message);
+  }
 });
 app.get('/admin/config-licenca', (req, res) => {
   res.json({ ok: true, ...configLicenca });
