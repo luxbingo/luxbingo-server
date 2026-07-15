@@ -29,7 +29,8 @@ app.get('/sala-adm/:admId', (req, res) => {
   });
 });
 
-const LOGO = 'https://luxbingo-server-production.up.railway.app/logo.png';
+const DOMINIO = process.env.RAILWAY_PUBLIC_DOMAIN || 'luxbingo-server-production.up.railway.app';
+const LOGO = `https://${DOMINIO}/logo.png`;
 
 app.get('/jogo/:codigo', (req, res) => {
   const codigo = req.params.codigo.toUpperCase();
@@ -45,7 +46,7 @@ app.get('/jogo/:codigo', (req, res) => {
 <link rel="icon" type="image/png" href="/icon.png">
 <meta property="og:title" content="Lux Bingo 🎰">
 <meta property="og:description" content="Você foi convidado para jogar Bingo ao vivo! Clique para participar.">
-<meta property="og:image" content="https://luxbingo-server-production.up.railway.app/logo.png">
+<meta property="og:image" content="${LOGO}">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#c9a227">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"><\/script>
@@ -1177,6 +1178,84 @@ const salas = {};
 
 const UPSTASH_URL = process.env.UPSTASH_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_TOKEN;
+// ===== SISTEMA DE LICENÇA / ASSINATURA DO ADM =====
+const licencas = {};
+const DIAS_TRIAL = 7;
+const DIAS_ASSINATURA = 30;
+let configLicenca = {
+  chavePix: process.env.PIX_ASSINATURA_CHAVE || '',
+  valor: parseFloat(process.env.VALOR_ASSINATURA || '29.90'),
+  mpToken: process.env.MP_TOKEN_ASSINATURA || ''
+};
+
+async function salvarConfigLicenca() {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return;
+  try {
+    await fetch(`${UPSTASH_URL}/set/luxbingo_config_licenca`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${UPSTASH_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(["luxbingo_config_licenca", JSON.stringify(configLicenca)])
+    });
+  } catch(e) { console.log('[CONFIG LICENCA SAVE ERROR]', e.message); }
+}
+
+async function carregarConfigLicenca() {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return;
+  try {
+    const r = await fetch(`${UPSTASH_URL}/get/luxbingo_config_licenca`, {
+      headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` }
+    });
+    const d = await r.json();
+    if (d.result) Object.assign(configLicenca, JSON.parse(d.result));
+    console.log('[CONFIG LICENCA RESTORE]', configLicenca.chavePix ? 'OK' : 'VAZIO');
+  } catch(e) { console.log('[CONFIG LICENCA LOAD ERROR]', e.message); }
+}
+
+async function salvarLicencas() {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return;
+  try {
+    await fetch(`${UPSTASH_URL}/set/luxbingo_licencas`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${UPSTASH_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(["luxbingo_licencas", JSON.stringify(licencas)])
+    });
+  } catch(e) { console.log('[LICENCAS SAVE ERROR]', e.message); }
+}
+
+async function carregarLicencas() {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return;
+  try {
+    const r = await fetch(`${UPSTASH_URL}/get/luxbingo_licencas`, {
+      headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` }
+    });
+    const d = await r.json();
+    if (d.result) Object.assign(licencas, JSON.parse(d.result));
+    console.log('[LICENCAS RESTORE]', Object.keys(licencas).length);
+  } catch(e) { console.log('[LICENCAS LOAD ERROR]', e.message); }
+}
+
+function statusLicenca(installId) {
+  const agora = Date.now();
+  let lic = licencas[installId];
+  if (!lic) {
+    lic = { instalado: agora, pagoAte: null };
+    licencas[installId] = lic;
+    salvarLicencas();
+  }
+  const trialFim = lic.instalado + DIAS_TRIAL * 24 * 60 * 60 * 1000;
+  const emTrial = agora < trialFim;
+  const assinaturaAtiva = !!(lic.pagoAte && agora < lic.pagoAte);
+  const liberado = emTrial || assinaturaAtiva;
+  return {
+    liberado,
+    emTrial,
+    diasTrialRestantes: emTrial ? Math.ceil((trialFim - agora) / (24*60*60*1000)) : 0,
+    assinaturaAtiva,
+    pagoAte: lic.pagoAte,
+chavePixAssinatura: configLicenca.chavePix,
+    valorAssinatura: configLicenca.valor
+  };
+}
 
 async function salvarSalas() {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return;
@@ -1361,7 +1440,22 @@ app.get('/admin/limpar-tudo', (req, res) => {
   salvarSalas();
   res.json({ ok: true, removidas: qtd });
 });
-app.get('/minhas-salas', (req, res) => {
+app.get('/licenca/:installId', (req, res) => {
+  const status = statusLicenca(req.params.installId);
+  res.json({ ok: true, ...status });
+});
+app.get('/admin/config-licenca', (req, res) => {
+  res.json({ ok: true, ...configLicenca });
+});
+
+app.post('/admin/config-licenca', (req, res) => {
+  const { chavePix, valor, mpToken } = req.body;
+  if (chavePix !== undefined) configLicenca.chavePix = chavePix;
+  if (valor !== undefined) configLicenca.valor = parseFloat(valor) || 0;
+  if (mpToken !== undefined) configLicenca.mpToken = mpToken;
+  salvarConfigLicenca();
+  res.json({ ok: true, ...configLicenca });
+});
   const lista = Object.values(salas).map((s) => ({
     codigo: s.codigo,
     nome: s.nome || s.adm?.nome || '',
@@ -1426,7 +1520,7 @@ app.post('/criar-pagamento/:codigo', async (req, res) => {
           last_name: nome.split(' ').slice(1).join(' ') || 'Jogador',
           identification: { type: 'CPF', number: cpfFinal }
         },
-        notification_url: `https://luxbingo-server-production.up.railway.app/webhook-mp`,
+        notification_url: `https://${DOMINIO}/webhook-mp`,
         metadata: { codigo, idUnico, qtd: qtd||1 }
       })
     });
@@ -1564,7 +1658,7 @@ app.post('/webhook-mp', async (req, res) => {
 
 app.get('/imprimir-qr/:codigo', (req, res) => {
   const codigo = req.params.codigo.toUpperCase();
-  const url = `https://luxbingo-server-production.up.railway.app/jogo/${codigo}`;
+  const url = `https://${DOMINIO}/jogo/${codigo}`;
 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(url)}`;
   res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8">
 <title>QR Code - Lux Bingo</title>
@@ -2185,7 +2279,7 @@ cb && cb({ ok: true });
 });
 
 const PORT = process.env.PORT || 3000;
-carregarSalas().then(() => {
+Promise.all([carregarSalas(), carregarLicencas(), carregarConfigLicenca()]).then(() => {
   server.listen(PORT, () => {
     console.log(`Lux Bingo Server rodando na porta ${PORT} 🎱`);
   });
