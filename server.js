@@ -1499,15 +1499,22 @@ app.post('/webhook-assinatura', async (req, res) => {
   const paymentId = data?.id || resource;
   if (!paymentId || !configLicenca.mpToken) return;
 
-  try {
+try {
     const r = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
       headers: { 'Authorization': `Bearer ${configLicenca.mpToken}` }
     });
     const payment = await r.json();
-    if (payment.error || payment.status !== 'approved') return;
+    console.log('[WEBHOOK ASSINATURA] status:', payment.status, 'erro:', payment.error, 'metadata:', JSON.stringify(payment.metadata));
+    if (payment.error || payment.status !== 'approved') {
+      console.log('[WEBHOOK ASSINATURA] ignorado - status não aprovado ou erro');
+      return;
+    }
 
     const installId = payment.metadata?.installId;
-    if (!installId) return;
+    if (!installId) {
+      console.log('[WEBHOOK ASSINATURA] ignorado - sem installId no metadata');
+      return;
+    }
 
     const agora = Date.now();
     const lic = licencas[installId] || { instalado: agora, pagoAte: null };
