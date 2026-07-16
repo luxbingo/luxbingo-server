@@ -1510,7 +1510,7 @@ try {
       return;
     }
 
-    const installId = payment.metadata?.installId;
+  const installId = payment.metadata?.install_id || payment.metadata?.installId;
     if (!installId) {
       console.log('[WEBHOOK ASSINATURA] ignorado - sem installId no metadata');
       return;
