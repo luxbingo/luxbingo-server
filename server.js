@@ -1442,9 +1442,11 @@ app.get('/admin/limpar-tudo', (req, res) => {
   res.json({ ok: true, removidas: qtd });
 });
 
-app.get('/licenca/:installId', (req, res) => {
-  const status = statusLicenca(req.params.installId);
-  res.json({ ok: true, ...status });
+app.get('/admin/resetar-licenca/:installId', (req, res) => {
+  const installId = req.params.installId;
+  delete licencas[installId];
+  salvarLicencas();
+  res.json({ ok: true, mensagem: 'Licença resetada. Abra o app de novo pra recomeçar o trial do zero.' });
 });
 
 app.post('/assinatura/pagar/:installId', async (req, res) => {
