@@ -1492,6 +1492,7 @@ app.post('/assinatura/pagar/:installId', async (req, res) => {
 
 app.post('/webhook-assinatura', async (req, res) => {
   res.sendStatus(200);
+  console.log('[WEBHOOK ASSINATURA] recebido:', JSON.stringify(req.body));
   const { type, action, data, topic, resource } = req.body;
   const tipoEvento = type || (action && action.startsWith('payment') ? 'payment' : null) || (topic === 'payment' ? 'payment' : null);
   if (tipoEvento !== 'payment') return;
