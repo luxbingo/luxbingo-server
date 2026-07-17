@@ -1517,10 +1517,9 @@ try {
       return;
     }
 
-    const agora = Date.now();
+ const agora = Date.now();
     const lic = licencas[installId] || { instalado: agora, pagoAte: null };
-    const baseParaContar = (lic.pagoAte && lic.pagoAte > agora) ? lic.pagoAte : agora;
-    lic.pagoAte = baseParaContar + configLicenca.assinaturaMinutos * 60 * 1000;
+    lic.pagoAte = agora + configLicenca.assinaturaMinutos * 60 * 1000;
     licencas[installId] = lic;
     salvarLicencas();
     console.log('[ASSINATURA] Liberado até', new Date(lic.pagoAte).toLocaleString('pt-BR'), 'para', installId);
