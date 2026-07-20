@@ -147,9 +147,17 @@
     <div class="label" style="margin-bottom:6px">Minutos após pagar · padrão: 43200 = 30 dias</div>
     <input id="cfgAssinaturaMin" type="number" placeholder="43200" style="width:100%;padding:10px;background:rgba(255,255,255,.05);border:1px solid rgba(201,162,39,.3);border-radius:8px;color:#f0c040;font-size:13px;outline:none">
   </div>
-  <button class="btn-refresh" onclick="salvarConfigLicenca()">💾 Salvar Configuração</button>
+<button class="btn-refresh" onclick="salvarConfigLicenca()">💾 Salvar Configuração</button>
   <div id="cfgStatus" style="margin-top:10px;font-size:12px;color:rgba(232,213,163,.6)"></div>
 </div>
+
+<div class="secao-titulo" style="margin-top:32px">Link do App (compartilhar com ADMs)</div>
+<div class="card-res" style="max-width:480px">
+  <div class="label" style="margin-bottom:8px">Link direto para baixar o APK</div>
+  <div id="linkApk" style="padding:10px;background:rgba(255,255,255,.05);border:1px solid rgba(201,162,39,.3);border-radius:8px;color:#f0c040;font-size:12px;word-break:break-all;margin-bottom:10px"></div>
+  <button class="btn-refresh" onclick="copiarLinkApk()">📋 Copiar Link</button>
+</div>
+
 <div class="footer">Lux Bingo · Painel do Dono · Atualização automática a cada 10s</div>
 
 <script>
@@ -254,7 +262,21 @@ function carregarConfigLicenca(){
     })
     .catch(function(){});
 }
+function mostrarLinkApk(){
+  var url = window.location.origin + '/luxbingo.apk';
+  document.getElementById('linkApk').textContent = url;
+}
 
+function copiarLinkApk(){
+  var url = window.location.origin + '/luxbingo.apk';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(function(){ alert('✅ Link copiado!'); });
+  } else {
+    var ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    alert('✅ Link copiado!');
+  }
+}
 function salvarConfigLicenca(){
   var chavePix = document.getElementById('cfgChavePix').value.trim();
   var valor = document.getElementById('cfgValor').value.trim();
@@ -286,6 +308,7 @@ function salvarConfigLicenca(){
 
 carregar();
 carregarConfigLicenca();
+mostrarLinkApk();
 iniciarTimer();
 </script>
 </body>
